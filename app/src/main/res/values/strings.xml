@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Compose Notes</string>
+    <string name="title_activity_edit_notes">Edit Notes</string>
+</resources>
