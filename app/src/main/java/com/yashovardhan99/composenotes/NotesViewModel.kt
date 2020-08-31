@@ -31,6 +31,11 @@ class NotesViewModel : ViewModel() {
         note.lastModified = Date()
     }
 
+    fun newNote() {
+        selectedNote = createNote()
+        _goToEdit.value = true
+    }
+
     fun createNote(): Note {
         val note = Note("", Date(), Date())
         _notes.add(note)
