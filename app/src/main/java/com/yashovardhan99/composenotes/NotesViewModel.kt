@@ -1,15 +1,19 @@
 package com.yashovardhan99.composenotes
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.util.*
 
-class NotesViewModel : ViewModel() {
-    private val _notes = NotesProvider(10).values.toMutableList()
+class NotesViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository: NoteRepository
     var notes by mutableStateOf<List<Note>>(listOf())
         private set
     var selectedNote: Note? = null
@@ -18,7 +22,11 @@ class NotesViewModel : ViewModel() {
     val goToEdit: LiveData<Boolean> = _goToEdit
 
     init {
-        notes = _notes
+        val notesDao = NoteDatabase.getDatabase(application).noteDao()
+        repository = NoteRepository(notesDao)
+        viewModelScope.launch {
+            notes = repository.getAllNotes()
+        }
     }
 
     fun selectNote(note: Note?) {
@@ -29,18 +37,25 @@ class NotesViewModel : ViewModel() {
     fun updateNote(note: Note, text: String) {
         note.text = text
         note.lastModified = Date()
+
+        viewModelScope.launch {
+            repository.updateNote(note)
+            notes = repository.getAllNotes()
+        }
     }
 
     fun newNote() {
-        selectedNote = createNote()
-        _goToEdit.value = true
+        val note = createNote()
+        Timber.d("New note = $note")
+        viewModelScope.launch {
+            note.id = repository.insertNote(note)
+            selectedNote = note
+            Timber.d("Inserted note = $note")
+            _goToEdit.value = true
+        }
     }
 
     fun createNote(): Note {
-        val note = Note("", Date(), Date())
-        _notes.add(note)
-        notes = _notes
-        selectedNote = note
-        return note
+        return Note(text = "", created = Date(), lastModified = Date())
     }
 }

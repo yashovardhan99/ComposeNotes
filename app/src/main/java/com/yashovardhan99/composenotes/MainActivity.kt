@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 
@@ -53,9 +54,11 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun MainPageScaffold(
     notesViewModel: NotesViewModel,
+    modifier: Modifier = Modifier,
     content: @Composable() (InnerPadding) -> Unit
 ) {
     Scaffold(
+        modifier = modifier,
         bottomBar = {
             BottomAppBar(cutoutShape = CircleShape) {}
         },
@@ -65,7 +68,7 @@ fun MainPageScaffold(
                 shape = CircleShape,
                 icon = { Icon(asset = Icons.Default.Add) })
         },
-        floatingActionButtonPosition = FabPosition.Center,
+        floatingActionButtonPosition = FabPosition.End,
         isFloatingActionButtonDocked = true,
         bodyContent = content
     )

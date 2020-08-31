@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumnFor
 import androidx.compose.material.Divider
-import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -69,7 +68,7 @@ class NotesProvider(count: Int = 1) : PreviewParameterProvider<Note> {
     init {
         val notes = mutableListOf<Note>()
         for (i in 1..count)
-            notes.add(Note(LoremIpsum(5 * i).values.first(), Date(), Date()))
+            notes.add(Note(i.toLong(), LoremIpsum(5 * i).values.first(), Date(), Date()))
         values = notes.asSequence()
     }
 }
@@ -110,12 +109,12 @@ fun NotesList(notesViewModel: NotesViewModel, modifier: Modifier = Modifier) {
     }
 }
 
-@Preview("Notes List", showDecoration = true)
-@Composable
-fun ListPreview(@PreviewParameter(NoteListProvider::class) noteItems: Pair<List<Note>, Boolean>) {
-    ComposeNotesTheme(darkTheme = noteItems.second) {
-        Scaffold {
-            NotesList(NotesViewModel(), modifier = Modifier.padding(it))
-        }
-    }
-}
+//@Preview("Notes List", showDecoration = true)
+//@Composable
+//fun ListPreview(@PreviewParameter(NoteListProvider::class) noteItems: Pair<List<Note>, Boolean>) {
+//    ComposeNotesTheme(darkTheme = noteItems.second) {
+//        Scaffold {
+//            NotesList(NotesViewModel(), modifier = Modifier.padding(it))
+//        }
+//    }
+//}

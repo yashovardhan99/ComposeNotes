@@ -18,18 +18,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.viewModel
+import timber.log.Timber
 
 @ExperimentalFoundationApi
 @Composable
 fun NoteEditor(modifier: Modifier = Modifier) {
     val notesViewModel = viewModel(NotesViewModel::class.java)
     val note = notesViewModel.selectedNote ?: notesViewModel.createNote()
+    Timber.d("Note = $note")
     var value by savedInstanceState(saver = TextFieldValue.Saver) { TextFieldValue(note.text) }
     val scrollState = rememberScrollState()
     BaseTextField(
         keyboardType = KeyboardType.Text,
         imeAction = ImeAction.NoAction,
         value = value, onValueChange = {
+            Timber.d("$it Note = $note")
             value = it
             notesViewModel.updateNote(note, it.text)
         },
