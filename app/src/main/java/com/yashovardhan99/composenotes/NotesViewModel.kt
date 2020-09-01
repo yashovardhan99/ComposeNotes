@@ -22,23 +22,20 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val notesDao = NoteDatabase.getDatabase(application).noteDao()
         repository = NoteRepository(notesDao)
-        viewModelScope.launch {
-            notes = repository.getAllNotes()
-        }
+        refreshNotes()
     }
 
     fun selectNote(note: Note?) {
         _selectedNote.value = note
     }
 
-    fun updateNote(note: Note, text: String) {
+    fun updateNote(note: Note, text: String): Note {
         note.text = text
         note.lastModified = Date()
-
         viewModelScope.launch {
             repository.updateNote(note)
-            notes = repository.getAllNotes()
         }
+        return note
     }
 
     fun newNote() {
@@ -53,5 +50,16 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun createNote(): Note {
         return Note(text = "", created = Date(), lastModified = Date())
+    }
+
+    fun refreshNotes() {
+        viewModelScope.launch { notes = repository.getAllNotes() }
+    }
+
+    fun deleteNote(note: Note) {
+        selectNote(null)
+        viewModelScope.launch {
+            repository.deleteNote(note)
+        }
     }
 }

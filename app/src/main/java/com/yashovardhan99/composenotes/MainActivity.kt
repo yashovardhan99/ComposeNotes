@@ -31,7 +31,8 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val selectedNote by notesViewModel.selectedNote.observeAsState()
             ComposeNotesTheme {
-                if (selectedNote == null)
+                if (selectedNote == null) {
+                    notesViewModel.refreshNotes()
                     MainPageScaffold(onNewPress = { notesViewModel.newNote() }) {
                         NotesList(
                             notesViewModel.notes,
@@ -39,12 +40,14 @@ class MainActivity : AppCompatActivity() {
                             modifier = Modifier.padding(it)
                         )
                     }
-                else {
+                } else {
                     val note: Note? = selectedNote
                     if (note != null) {
                         EditScaffold(
+                            onBackPressed =
                             { notesViewModel.selectNote(null) },
-                            "Edited ${
+                            onDelete = { notesViewModel.deleteNote(note) },
+                            bottomText = "Edited ${
                                 DateUtils.getRelativeTimeSpanString(
                                     this, note.lastModified.time, false
                                 )

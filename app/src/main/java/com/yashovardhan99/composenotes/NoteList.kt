@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.ui.tooling.preview.Preview
@@ -39,9 +40,10 @@ fun SecondaryText(text: String, modifier: Modifier = Modifier) {
 fun PrimaryText(text: String, modifier: Modifier = Modifier) {
     Text(
         modifier = modifier,
-        text = text,
+        text = if (text.isNotBlank()) text else "New note...",
+        fontStyle = if (text.isNotBlank()) FontStyle.Normal else FontStyle.Italic,
         maxLines = 1,
-        style = typography.subtitle1,
+        style = if (text.isNotBlank()) typography.subtitle1 else typography.caption,
         overflow = TextOverflow.Ellipsis
     )
 }

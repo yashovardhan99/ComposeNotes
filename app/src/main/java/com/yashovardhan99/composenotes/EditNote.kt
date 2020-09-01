@@ -10,10 +10,9 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.runtime.*
 import androidx.compose.runtime.savedinstancestate.savedInstanceState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,8 +29,13 @@ import timber.log.Timber
 
 @ExperimentalFoundationApi
 @Composable
-fun NoteEditor(note: Note, updateNote: (Note, String) -> Unit, modifier: Modifier = Modifier) {
-    Timber.d("NoteEditor : Note = $note")
+fun NoteEditor(
+    originalNote: Note,
+    updateNote: (Note, String) -> Note,
+    modifier: Modifier = Modifier
+) {
+    Timber.d("NoteEditor : Note = $originalNote")
+    var note by remember { mutableStateOf(originalNote) }
     var value by savedInstanceState(saver = TextFieldValue.Saver) { TextFieldValue(note.text) }
     val scrollState = rememberScrollState()
     BaseTextField(
@@ -39,7 +43,7 @@ fun NoteEditor(note: Note, updateNote: (Note, String) -> Unit, modifier: Modifie
         imeAction = ImeAction.NoAction,
         value = value, onValueChange = {
             value = it
-            updateNote(note, it.text)
+            note = updateNote(note, it.text)
         },
         modifier = modifier.fillMaxSize()
             .padding(horizontal = 20.dp)
@@ -50,6 +54,7 @@ fun NoteEditor(note: Note, updateNote: (Note, String) -> Unit, modifier: Modifie
 @Composable
 fun EditScaffold(
     onBackPressed: () -> Unit,
+    onDelete: () -> Unit,
     bottomText: String = "",
     modifier: Modifier = Modifier,
     content: @Composable() (InnerPadding) -> Unit
@@ -61,7 +66,11 @@ fun EditScaffold(
                     Icon(asset = Icons.Default.ArrowBack)
                 }
             }, title = {}, backgroundColor = Color.Transparent,
-                elevation = 2.dp
+                elevation = 2.dp, actions = {
+                    IconButton(onClick = onDelete) {
+                        Icon(asset = Icons.Default.Delete)
+                    }
+                }
             )
         }, bottomBar = {
             BottomAppBar(backgroundColor = Color.Transparent, elevation = 2.dp) {
@@ -80,8 +89,8 @@ fun EditScaffold(
 @Composable
 fun NoteEditorPreview(@PreviewParameter(NoteItemPreviewProvider::class) noteItem: Pair<Note, Boolean>) {
     ComposeNotesTheme(darkTheme = noteItem.second) {
-        EditScaffold(onBackPressed = {}, bottomText = "Edit here") {
-            NoteEditor(note = noteItem.first, updateNote = { _, _ -> })
+        EditScaffold(onBackPressed = {}, onDelete = {}, bottomText = "Edit here") {
+            NoteEditor(originalNote = noteItem.first, updateNote = { _, _ -> noteItem.first })
         }
     }
 
