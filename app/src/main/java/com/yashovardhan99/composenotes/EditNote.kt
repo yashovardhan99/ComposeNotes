@@ -19,11 +19,15 @@ import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.length
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.ui.tooling.preview.Preview
 import androidx.ui.tooling.preview.PreviewParameter
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
@@ -44,6 +48,7 @@ fun NoteEditor(
     val scrollState = rememberScrollState()
     val focusRequester = FocusRequester()
     BaseTextField(
+        visualTransformation = firstLineHighlight,
         keyboardType = KeyboardType.Text,
         imeAction = ImeAction.NoAction,
         value = value, onValueChange = {
@@ -102,6 +107,18 @@ fun NoteEditorPreview(@PreviewParameter(NoteItemPreviewProvider::class) noteItem
         EditScaffold(onBackPressed = {}, onDelete = {}, bottomText = "Edit here") {
             NoteEditor(originalNote = noteItem.first, updateNote = { _, _ -> noteItem.first })
         }
+    }
+}
+
+val firstLineHighlight = object : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val first = text.text.indexOf('\n')
+        val builder = AnnotatedString.Builder(text)
+        val style = SpanStyle(fontSize = 28.sp, fontWeight = FontWeight.SemiBold)
+        val lineStyle = ParagraphStyle(lineHeight = 3.sp)
+        builder.addStyle(style, 0, if (first != -1) first else text.length)
+        builder.addStyle(lineStyle, 0, if (first != -1) first else text.length)
+        return TransformedText(builder.toAnnotatedString(), OffsetMap.identityOffsetMap)
     }
 
 }
