@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumnFor
 import androidx.compose.material.Divider
+import androidx.compose.material.EmphasisAmbient
+import androidx.compose.material.ProvideEmphasis
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.ui.tooling.preview.Preview
@@ -27,13 +30,15 @@ import java.util.*
 
 @Composable
 fun SecondaryText(text: String, modifier: Modifier = Modifier) {
-    Text(
-        modifier = modifier,
-        text = text,
-        maxLines = 2,
-        style = typography.caption,
-        overflow = TextOverflow.Ellipsis,
-    )
+    ProvideEmphasis(emphasis = EmphasisAmbient.current.high) {
+        Text(
+            modifier = modifier,
+            text = text,
+            maxLines = 2,
+            style = typography.caption,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 @Composable
@@ -43,7 +48,8 @@ fun PrimaryText(text: String, modifier: Modifier = Modifier) {
         text = if (text.isNotBlank()) text else "New note...",
         fontStyle = if (text.isNotBlank()) FontStyle.Normal else FontStyle.Italic,
         maxLines = 1,
-        style = if (text.isNotBlank()) typography.subtitle1 else typography.caption,
+        fontWeight = if (text.isNotBlank()) FontWeight.SemiBold else null,
+        style = if (text.isNotBlank()) typography.h6 else typography.caption,
         overflow = TextOverflow.Ellipsis
     )
 }

@@ -15,6 +15,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.savedinstancestate.savedInstanceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.ExperimentalFocus
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -27,6 +30,7 @@ import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
 import timber.log.Timber
 
+@ExperimentalFocus
 @ExperimentalFoundationApi
 @Composable
 fun NoteEditor(
@@ -38,17 +42,22 @@ fun NoteEditor(
     var note by remember { mutableStateOf(originalNote) }
     var value by savedInstanceState(saver = TextFieldValue.Saver) { TextFieldValue(note.text) }
     val scrollState = rememberScrollState()
+    val focusRequester = FocusRequester()
     BaseTextField(
         keyboardType = KeyboardType.Text,
         imeAction = ImeAction.NoAction,
         value = value, onValueChange = {
             value = it
             note = updateNote(note, it.text)
-        },
-        modifier = modifier.fillMaxSize()
+        }, modifier = modifier.fillMaxSize()
             .padding(horizontal = 20.dp)
             .verticalScroll(scrollState)
+            .focusRequester(focusRequester)
     )
+    onCommit() {
+        if (note.text.isBlank())
+            focusRequester.requestFocus()
+    }
 }
 
 @Composable
@@ -84,6 +93,7 @@ fun EditScaffold(
         })
 }
 
+@ExperimentalFocus
 @ExperimentalFoundationApi
 @Preview
 @Composable
