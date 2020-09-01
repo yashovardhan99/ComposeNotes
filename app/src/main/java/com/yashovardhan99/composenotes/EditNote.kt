@@ -115,9 +115,12 @@ val firstLineHighlight = object : VisualTransformation {
         val first = text.text.indexOf('\n')
         val builder = AnnotatedString.Builder(text)
         val style = SpanStyle(fontSize = 28.sp, fontWeight = FontWeight.SemiBold)
-        val lineStyle = ParagraphStyle(lineHeight = 3.sp)
+        val lineStyle = ParagraphStyle(lineHeight = 36.sp)
+        val defaultStyle = ParagraphStyle(lineHeight = 24.sp)
         builder.addStyle(style, 0, if (first != -1) first else text.length)
         builder.addStyle(lineStyle, 0, if (first != -1) first else text.length)
+        if (first != -1)
+            builder.addStyle(defaultStyle, first, text.length)
         return TransformedText(builder.toAnnotatedString(), OffsetMap.identityOffsetMap)
     }
 
