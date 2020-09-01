@@ -1,6 +1,7 @@
 package com.yashovardhan99.composenotes
 
 import android.os.Bundle
+import android.text.format.DateUtils
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Icon
@@ -18,7 +19,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 
@@ -29,22 +29,41 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         notesViewModel = ViewModelProvider(this)[NotesViewModel::class.java]
         setContent {
-            val showList by notesViewModel.goToEdit.observeAsState()
+            val selectedNote by notesViewModel.selectedNote.observeAsState()
             ComposeNotesTheme {
-                if (showList == false)
-                    MainPageScaffold(notesViewModel = notesViewModel) {
-                        NotesList(notesViewModel, modifier = Modifier.padding(it))
+                if (selectedNote == null)
+                    MainPageScaffold(onNewPress = { notesViewModel.newNote() }) {
+                        NotesList(
+                            notesViewModel.notes,
+                            { note -> notesViewModel.selectNote(note) },
+                            modifier = Modifier.padding(it)
+                        )
                     }
-                else
-                    EditScaffold {
-                        NoteEditor(Modifier.padding(it))
+                else {
+                    val note: Note? = selectedNote
+                    if (note != null) {
+                        EditScaffold(
+                            { notesViewModel.selectNote(null) },
+                            "Edited ${
+                                DateUtils.getRelativeTimeSpanString(
+                                    this, note.lastModified.time, false
+                                )
+                            }"
+                        ) {
+                            NoteEditor(
+                                note,
+                                { note, s -> notesViewModel.updateNote(note, s) },
+                                Modifier.padding(it)
+                            )
+                        }
                     }
+                }
             }
         }
     }
 
     override fun onBackPressed() {
-        if (notesViewModel.selectedNote == null)
+        if (notesViewModel.selectedNote.value == null)
             super.onBackPressed()
         else
             notesViewModel.selectNote(null)
@@ -53,7 +72,7 @@ class MainActivity : AppCompatActivity() {
 
 @Composable
 fun MainPageScaffold(
-    notesViewModel: NotesViewModel,
+    onNewPress: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable() (InnerPadding) -> Unit
 ) {
@@ -64,7 +83,7 @@ fun MainPageScaffold(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { notesViewModel.newNote() },
+                onClick = onNewPress,
                 shape = CircleShape,
                 icon = { Icon(asset = Icons.Default.Add) })
         },

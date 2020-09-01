@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumnFor
 import androidx.compose.material.Divider
+import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -46,13 +47,13 @@ fun PrimaryText(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun NoteItem(note: Note, notesViewModel: NotesViewModel? = null, modifier: Modifier = Modifier) {
+fun NoteItem(note: Note, onClick: (Note) -> Unit, modifier: Modifier = Modifier) {
     val first = remember(note.text) { note.text.substringBefore('\n') }
     val secondary = remember(note.text) { note.text.substringAfter('\n', "").replace('\n', ' ') }
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = { notesViewModel?.selectNote(note) })
+            .clickable(onClick = { onClick(note) })
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
     ) {
@@ -96,25 +97,24 @@ fun NoteItemPreview(
     @PreviewParameter(NoteItemPreviewProvider::class) noteItem: Pair<Note, Boolean>
 ) {
     ComposeNotesTheme(darkTheme = noteItem.second) {
-        NoteItem(noteItem.first)
+        NoteItem(noteItem.first, {})
     }
 }
 
 @Composable
-fun NotesList(notesViewModel: NotesViewModel, modifier: Modifier = Modifier) {
-    val viewModel = remember { notesViewModel }
-    LazyColumnFor(items = viewModel.notes, modifier = modifier) {
-        NoteItem(it, notesViewModel)
+fun NotesList(notes: List<Note>, onClick: (Note) -> Unit, modifier: Modifier = Modifier) {
+    LazyColumnFor(items = notes, modifier = modifier) {
+        NoteItem(it, onClick)
         Divider(thickness = 0.2f.dp)
     }
 }
 
-//@Preview("Notes List", showDecoration = true)
-//@Composable
-//fun ListPreview(@PreviewParameter(NoteListProvider::class) noteItems: Pair<List<Note>, Boolean>) {
-//    ComposeNotesTheme(darkTheme = noteItems.second) {
-//        Scaffold {
-//            NotesList(NotesViewModel(), modifier = Modifier.padding(it))
-//        }
-//    }
-//}
+@Preview("Notes List", showDecoration = true)
+@Composable
+fun ListPreview(@PreviewParameter(NoteListProvider::class) noteItems: Pair<List<Note>, Boolean>) {
+    ComposeNotesTheme(darkTheme = noteItems.second) {
+        Scaffold {
+            NotesList(noteItems.first, {}, modifier = Modifier.padding(it))
+        }
+    }
+}

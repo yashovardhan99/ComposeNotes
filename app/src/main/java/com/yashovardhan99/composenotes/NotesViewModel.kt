@@ -16,10 +16,8 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: NoteRepository
     var notes by mutableStateOf<List<Note>>(listOf())
         private set
-    var selectedNote: Note? = null
-        private set
-    private val _goToEdit = MutableLiveData(false)
-    val goToEdit: LiveData<Boolean> = _goToEdit
+    private val _selectedNote: MutableLiveData<Note> = MutableLiveData()
+    val selectedNote: LiveData<Note> = _selectedNote
 
     init {
         val notesDao = NoteDatabase.getDatabase(application).noteDao()
@@ -30,8 +28,7 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectNote(note: Note?) {
-        selectedNote = note
-        _goToEdit.value = note != null
+        _selectedNote.value = note
     }
 
     fun updateNote(note: Note, text: String) {
@@ -49,13 +46,12 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         Timber.d("New note = $note")
         viewModelScope.launch {
             note.id = repository.insertNote(note)
-            selectedNote = note
+            _selectedNote.value = note
             Timber.d("Inserted note = $note")
-            _goToEdit.value = true
         }
     }
 
-    fun createNote(): Note {
+    private fun createNote(): Note {
         return Note(text = "", created = Date(), lastModified = Date())
     }
 }
