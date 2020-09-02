@@ -102,10 +102,11 @@ fun EditScaffold(
 @ExperimentalFoundationApi
 @Preview
 @Composable
-fun NoteEditorPreview(@PreviewParameter(NoteItemPreviewProvider::class) noteItem: Pair<Note, Boolean>) {
-    ComposeNotesTheme(darkTheme = noteItem.second) {
+fun NoteEditorPreview(@PreviewParameter(ThemePreviewProvider::class) isDark: Boolean) {
+    val note = NotesProvider(wordIncrement = 50).values.first()
+    ComposeNotesTheme(darkTheme = isDark) {
         EditScaffold(onBackPressed = {}, onDelete = {}, bottomText = "Edit here") {
-            NoteEditor(originalNote = noteItem.first, updateNote = { _, _ -> noteItem.first })
+            NoteEditor(originalNote = note, updateNote = { _, _ -> note })
         }
     }
 }

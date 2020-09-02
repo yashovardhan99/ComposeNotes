@@ -71,25 +71,27 @@ fun NoteItem(note: Note, onClick: (Note) -> Unit, modifier: Modifier = Modifier)
     }
 }
 
-class NotesProvider(count: Int = 1) : PreviewParameterProvider<Note> {
+class NotesProvider(count: Int = 1, wordIncrement: Int = 5) : PreviewParameterProvider<Note> {
     override val values: Sequence<Note>
 
     init {
         val notes = mutableListOf<Note>()
         for (i in 1..count)
-            notes.add(Note(i.toLong(), LoremIpsum(5 * i).values.first(), Date(), Date()))
+            notes.add(
+                Note(
+                    i.toLong(),
+                    LoremIpsum(wordIncrement * i).values.first(),
+                    Date(),
+                    Date()
+                )
+            )
         values = notes.asSequence()
     }
 }
 
-class NoteItemPreviewProvider :
-    PreviewParameterProvider<Pair<Note, Boolean>> {
-    override val values: Sequence<Pair<Note, Boolean>>
-
-    init {
-        val note = NotesProvider(1)
-        values = sequenceOf(Pair(note.values.first(), false), Pair(note.values.first(), true))
-    }
+class ThemePreviewProvider :
+    PreviewParameterProvider<Boolean> {
+    override val values = sequenceOf(false, true)
 }
 
 class NoteListProvider : PreviewParameterProvider<Pair<List<Note>, Boolean>> {
@@ -99,13 +101,14 @@ class NoteListProvider : PreviewParameterProvider<Pair<List<Note>, Boolean>> {
 }
 
 @ExperimentalFoundationApi
-@Preview(name = "Note Item")
+@Preview(name = "Note Item", showBackground = true)
 @Composable
 fun NoteItemPreview(
-    @PreviewParameter(NoteItemPreviewProvider::class) noteItem: Pair<Note, Boolean>
+    @PreviewParameter(ThemePreviewProvider::class) isDark: Boolean
 ) {
-    ComposeNotesTheme(darkTheme = noteItem.second) {
-        NoteItem(noteItem.first, {})
+    val note = NotesProvider(wordIncrement = 30).values.first()
+    ComposeNotesTheme(darkTheme = isDark) {
+        NoteItem(note, {})
     }
 }
 
