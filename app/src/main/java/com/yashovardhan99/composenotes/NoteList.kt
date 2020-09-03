@@ -1,20 +1,14 @@
 package com.yashovardhan99.composenotes
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Text
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.annotation.IntRange
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumnFor
-import androidx.compose.material.Divider
-import androidx.compose.material.EmphasisAmbient
-import androidx.compose.material.ProvideEmphasis
-import androidx.compose.material.Scaffold
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Layout
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +20,7 @@ import androidx.ui.tooling.preview.PreviewParameterProvider
 import androidx.ui.tooling.preview.datasource.LoremIpsum
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
+import timber.log.Timber
 import java.util.*
 
 @Composable
@@ -71,7 +66,11 @@ fun NoteItem(note: Note, onClick: (Note) -> Unit, modifier: Modifier = Modifier)
     }
 }
 
-class NotesProvider(count: Int = 1, wordIncrement: Int = 5) : PreviewParameterProvider<Note> {
+class NotesProvider(
+    @IntRange(from = 1) count: Int = 1,
+    @IntRange(from = 1) wordIncrement: Int = 5
+) :
+    PreviewParameterProvider<Note> {
     override val values: Sequence<Note>
 
     init {
@@ -101,14 +100,16 @@ class NoteListProvider : PreviewParameterProvider<Pair<List<Note>, Boolean>> {
 }
 
 @ExperimentalFoundationApi
-@Preview(name = "Note Item", showBackground = true)
+@Preview(name = "Note Item")
 @Composable
 fun NoteItemPreview(
     @PreviewParameter(ThemePreviewProvider::class) isDark: Boolean
 ) {
     val note = NotesProvider(wordIncrement = 30).values.first()
     ComposeNotesTheme(darkTheme = isDark) {
-        NoteItem(note, {})
+        Surface {
+            NoteItem(note, {})
+        }
     }
 }
 
@@ -126,6 +127,54 @@ fun ListPreview(@PreviewParameter(NoteListProvider::class) noteItems: Pair<List<
     ComposeNotesTheme(darkTheme = noteItems.second) {
         Scaffold {
             NotesList(noteItems.first, {}, modifier = Modifier.padding(it))
+        }
+    }
+}
+
+@Composable
+fun GridLayout(
+    modifier: Modifier = Modifier,
+    @IntRange(from = 1) maxCols: Int,
+    children: @Composable() () -> Unit
+) {
+    Layout(modifier = modifier, children = children) { measurables, constraints ->
+        val gridConstraint =
+            constraints.copy(maxWidth = (constraints.maxWidth / maxCols).coerceAtLeast(constraints.minWidth))
+        val maxHeight = IntArray(maxCols) { 0 }
+        val placeables = measurables.mapIndexed { i, measurable ->
+            val placeable = measurable.measure(gridConstraint)
+            maxHeight[i % maxCols] += placeable.height
+            placeable
+        }
+        Timber.d("GridLayout: constraints = $constraints Max height = ${maxHeight.toList()}")
+        val xPos = IntArray(maxCols) { i -> i * gridConstraint.maxWidth }
+        val lastY = IntArray(maxCols) { 0 }
+        layout(
+            constraints.maxWidth,
+            maxHeight.maxOrNull()?.coerceIn(constraints.minHeight, constraints.maxHeight)
+                ?: constraints.minHeight
+        ) {
+            placeables.forEachIndexed { i, placeable ->
+                placeable.placeRelative(xPos[i % maxCols], lastY[i % maxCols])
+                lastY[i % maxCols] += placeable.height
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, showDecoration = true)
+@Composable
+fun GridPreview(@PreviewParameter(ThemePreviewProvider::class) isDark: Boolean) {
+    val notes = NotesProvider(30, 2).values
+    ComposeNotesTheme(isDark) {
+        ScrollableColumn(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background)
+        ) {
+            GridLayout(maxCols = 2, modifier = Modifier.fillMaxHeight()) {
+                for (i in 0 until notes.count()) {
+                    NoteItem(note = notes.elementAt(i), onClick = {})
+                }
+            }
         }
     }
 }
