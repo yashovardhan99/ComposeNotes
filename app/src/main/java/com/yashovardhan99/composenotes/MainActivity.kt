@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.platform.setContent
 import androidx.lifecycle.ViewModelProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
@@ -25,6 +26,7 @@ import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 @ExperimentalFoundationApi
 class MainActivity : AppCompatActivity() {
     private lateinit var notesViewModel: NotesViewModel
+    @OptIn(ExperimentalFocus::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         notesViewModel = ViewModelProvider(this)[NotesViewModel::class.java]
