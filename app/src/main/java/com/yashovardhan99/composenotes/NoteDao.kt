@@ -15,7 +15,7 @@ interface NoteDao {
     suspend fun deleteNote(vararg note: Note)
 
     @Query("SELECT * FROM NOTE_TABLE")
-    suspend fun loadAllNotes(): List<Note>
+    fun loadAllNotes(): Flow<List<Note>>
 
     @Query("SELECT * FROM NOTE_TABLE WHERE id = :id")
     suspend fun loadNoteFromId(id: Long): Note

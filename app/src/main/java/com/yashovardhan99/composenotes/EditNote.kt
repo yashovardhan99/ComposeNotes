@@ -51,9 +51,11 @@ fun NoteEditor(
         visualTransformation = firstLineHighlight,
         keyboardType = KeyboardType.Text,
         imeAction = ImeAction.NoAction,
-        value = value, onValueChange = {
+        value = value,
+        onValueChange = {
+            if (value.text != it.text)
+                note = updateNote(note, it.text)
             value = it
-            note = updateNote(note, it.text)
         }, modifier = modifier.padding(horizontal = 20.dp)
             .fillMaxSize()
             .verticalScroll(scrollState)

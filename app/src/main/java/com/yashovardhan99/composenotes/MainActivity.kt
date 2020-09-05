@@ -3,19 +3,17 @@ package com.yashovardhan99.composenotes
 import android.os.Bundle
 import android.text.format.DateUtils
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Icon
+import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.InnerPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.BottomAppBar
-import androidx.compose.material.FabPosition
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Scaffold
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.ExperimentalFocus
@@ -34,32 +32,35 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val selectedNote by notesViewModel.selectedNote.observeAsState()
             ComposeNotesTheme {
-                if (selectedNote == null) {
-                    notesViewModel.refreshNotes()
-                    MainPageScaffold(onNewPress = { notesViewModel.newNote() }) {
-                        val notes by notesViewModel.notes.observeAsState(listOf())
-                        NotesList(
-                            notes,
-                            { note -> notesViewModel.selectNote(note) },
-                            modifier = Modifier.padding(it)
-                        )
-                    }
-                } else {
-                    val note: Note? = selectedNote
-                    if (note != null) {
+                Crossfade(selectedNote) { note ->
+                    if (note == null) {
+                        MainPageScaffold(onNewPress = { notesViewModel.newNote() }) { innerPadding ->
+                            val notes by notesViewModel.notes.collectAsState(listOf())
+                            NotesList(
+                                notes.sortedByDescending { it.lastModified },
+                                { note -> notesViewModel.selectNote(note) },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                    } else {
+                        var lastModified by mutableStateOf(note.lastModified)
                         EditScaffold(
                             onBackPressed =
                             { notesViewModel.selectNote(null) },
                             onDelete = { notesViewModel.deleteNote(note) },
                             bottomText = "Edited ${
                                 DateUtils.getRelativeTimeSpanString(
-                                    this, note.lastModified.time, false
+                                    this, lastModified.time, false
                                 )
                             }"
                         ) {
                             NoteEditor(
                                 originalNote = note,
-                                updateNote = { note, s -> notesViewModel.updateNote(note, s) },
+                                updateNote = { note, s ->
+                                    val updated = notesViewModel.updateNote(note, s)
+                                    lastModified = updated.lastModified
+                                    updated
+                                },
                                 modifier = Modifier.padding(it)
                             )
                         }
@@ -84,6 +85,7 @@ fun MainPageScaffold(
     content: @Composable() (InnerPadding) -> Unit
 ) {
     Scaffold(
+        topBar = { TopAppBar(title = { Text(text = "Compose Notes") }) },
         modifier = modifier,
         bottomBar = {
             BottomAppBar(cutoutShape = CircleShape) {}

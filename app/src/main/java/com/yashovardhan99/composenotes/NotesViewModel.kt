@@ -5,21 +5,21 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.*
 
 class NotesViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: NoteRepository
-    private val _notes = MutableLiveData(listOf<Note>())
-    val notes: LiveData<List<Note>> = _notes
+    val notes: Flow<List<Note>>
     private val _selectedNote: MutableLiveData<Note> = MutableLiveData()
     val selectedNote: LiveData<Note> = _selectedNote
 
     init {
         val notesDao = NoteDatabase.getDatabase(application).noteDao()
         repository = NoteRepository(notesDao)
-        refreshNotes()
+        notes = repository.getAllNotes()
     }
 
     fun selectNote(note: Note?) {
@@ -47,12 +47,6 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun createNote(): Note {
         return Note(text = "", created = Date(), lastModified = Date())
-    }
-
-    fun refreshNotes() {
-        viewModelScope.launch {
-            _notes.value = repository.getAllNotes().sortedByDescending { it.lastModified }
-        }
     }
 
     fun deleteNote(note: Note) {
