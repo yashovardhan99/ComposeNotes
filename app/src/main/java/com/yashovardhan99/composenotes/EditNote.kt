@@ -54,8 +54,8 @@ fun NoteEditor(
         value = value, onValueChange = {
             value = it
             note = updateNote(note, it.text)
-        }, modifier = modifier.fillMaxSize()
-            .padding(horizontal = 20.dp)
+        }, modifier = modifier.padding(horizontal = 20.dp)
+            .fillMaxSize()
             .verticalScroll(scrollState)
             .focusRequester(focusRequester)
     )

@@ -6,7 +6,7 @@ plugins {
 
 android {
     compileSdkVersion 30
-    buildToolsVersion "30.0.1"
+    buildToolsVersion "30.0.2"
 
     defaultConfig {
         applicationId "com.yashovardhan99.composenotes"
@@ -62,6 +62,7 @@ dependencies {
     implementation "androidx.room:room-ktx:$rootProject.roomVersion"
 
     implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.archLifecycleVersion"
+    //noinspection LifecycleAnnotationProcessorWithJava8
     kapt "androidx.lifecycle:lifecycle-compiler:$rootProject.archLifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$rootProject.archLifecycleVersion"
 
