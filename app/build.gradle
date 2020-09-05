@@ -67,6 +67,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$rootProject.archLifecycleVersion"
 
     implementation 'com.jakewharton.timber:timber:4.7.1'
+    implementation "androidx.datastore:datastore-preferences:1.0.0-alpha01"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$rootProject.coroutines"

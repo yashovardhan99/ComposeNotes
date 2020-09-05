@@ -13,11 +13,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.unit.Position
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 
@@ -34,10 +37,13 @@ class MainActivity : AppCompatActivity() {
             ComposeNotesTheme {
                 Crossfade(selectedNote) { note ->
                     if (note == null) {
-                        MainPageScaffold(onNewPress = { notesViewModel.newNote() }) { innerPadding ->
+                        MainPageScaffold(
+                            onNewPress = { notesViewModel.newNote() },
+                            onSortKeyUpdate = notesViewModel::updateSortKey
+                        ) { innerPadding ->
                             val notes by notesViewModel.notes.collectAsState(listOf())
                             NotesList(
-                                notes.sortedByDescending { it.lastModified },
+                                notes,
                                 { note -> notesViewModel.selectNote(note) },
                                 modifier = Modifier.padding(innerPadding)
                             )
@@ -82,14 +88,43 @@ class MainActivity : AppCompatActivity() {
 fun MainPageScaffold(
     onNewPress: () -> Unit,
     modifier: Modifier = Modifier,
+    onSortKeyUpdate: (SortKey) -> Unit,
     content: @Composable() (InnerPadding) -> Unit
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text(text = "Compose Notes") }) },
-        modifier = modifier,
-        bottomBar = {
-            BottomAppBar(cutoutShape = CircleShape) {}
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Compose Notes") },
+                actions = {
+                    var dropDownState by remember { mutableStateOf(false) }
+                    DropdownMenu(
+                        toggle = {
+                            IconToggleButton(checked = dropDownState, onCheckedChange = {
+                                dropDownState = it
+                            }) {
+                                Icon(asset = Icons.Default.MoreVert)
+                            }
+                        }, expanded = dropDownState,
+                        onDismissRequest = { dropDownState = false },
+                        dropdownOffset = Position((-48).dp, 0.dp)
+                    ) {
+                        DropdownMenuItem(onClick = {
+                            onSortKeyUpdate(SortKey.LAST_MODIFIED)
+                            dropDownState = false
+                        }) {
+                            Text(text = "Sort by last modified")
+                        }
+                        DropdownMenuItem(onClick = {
+                            onSortKeyUpdate(SortKey.CREATED)
+                            dropDownState = false
+                        }) {
+                            Text(text = "Sort by Creation date")
+                        }
+                    }
+                }
+            )
         },
+        modifier = modifier,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNewPress,
@@ -97,7 +132,6 @@ fun MainPageScaffold(
                 icon = { Icon(asset = Icons.Default.Add) })
         },
         floatingActionButtonPosition = FabPosition.End,
-        isFloatingActionButtonDocked = true,
         bodyContent = content
     )
 }
