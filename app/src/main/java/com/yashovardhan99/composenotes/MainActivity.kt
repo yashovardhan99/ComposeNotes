@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 
+@ExperimentalMaterialApi
 @ExperimentalFocus
 @ExperimentalFoundationApi
 class MainActivity : AppCompatActivity() {
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity() {
                             NotesList(
                                 notes,
                                 { note -> notesViewModel.selectNote(note) },
+                                { note -> notesViewModel.deleteNote(note) },
                                 modifier = Modifier.padding(innerPadding)
                             )
                         }

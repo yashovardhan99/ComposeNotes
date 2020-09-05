@@ -1,16 +1,19 @@
 package com.yashovardhan99.composenotes
 
 import androidx.annotation.IntRange
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Text
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.animate
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumnFor
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.onCommit
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.drawLayer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -21,6 +24,7 @@ import androidx.ui.tooling.preview.PreviewParameterProvider
 import androidx.ui.tooling.preview.datasource.LoremIpsum
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
+import timber.log.Timber
 import java.util.*
 
 @Composable
@@ -49,20 +53,60 @@ fun PrimaryText(text: String, modifier: Modifier = Modifier) {
     )
 }
 
+@ExperimentalMaterialApi
 @Composable
-fun NoteItem(note: Note, onClick: (Note) -> Unit, modifier: Modifier = Modifier) {
+fun NoteItem(
+    note: Note, onClick: (Note) -> Unit,
+    onDelete: (Note) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val first = remember(note.text) { note.text.substringBefore('\n') }
     val secondary = remember(note.text) { note.text.substringAfter('\n', "").replace('\n', ' ') }
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = { onClick(note) })
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
-    ) {
-        PrimaryText(text = first)
-        if (secondary.isNotBlank())
-            SecondaryText(text = secondary)
+    val dismissState = rememberDismissState()
+    onCommit(dismissState.value) {
+        if (dismissState.value != DismissValue.Default) {
+            Timber.d("Deleted $note")
+            dismissState.reset()
+            onDelete(note)
+        }
+    }
+    SwipeToDismiss(state = dismissState,
+        dismissThresholds = { FractionalThreshold(0.25f) },
+        background = {
+            val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
+            val color = animate(
+                if (dismissState.targetValue == DismissValue.Default) MaterialTheme.colors.onError else MaterialTheme.colors.error
+            )
+            val gravity = when (direction) {
+                DismissDirection.StartToEnd -> Alignment.CenterStart
+                DismissDirection.EndToStart -> Alignment.CenterEnd
+            }
+            val icon = Icons.Default.Delete
+            val scale =
+                animate(if (dismissState.targetValue == DismissValue.Default) 0.75f else 1f)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                backgroundColor = color,
+                paddingStart = 20.dp,
+                paddingEnd = 20.dp,
+                gravity = gravity
+            ) {
+                Icon(icon, Modifier.drawLayer(scaleX = scale, scaleY = scale))
+            }
+        }) {
+        Card(elevation = animate(if (dismissState.direction != 0f) 4.dp else 0.dp)) {
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = { onClick(note) })
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+            ) {
+                PrimaryText(text = first)
+                if (secondary.isNotBlank())
+                    SecondaryText(text = secondary)
+            }
+        }
     }
 }
 
@@ -99,6 +143,7 @@ class NoteListProvider : PreviewParameterProvider<Pair<List<Note>, Boolean>> {
         get() = sequenceOf(Pair(notes, false), Pair(notes, true))
 }
 
+@ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Preview(name = "Note Item")
 @Composable
@@ -108,25 +153,32 @@ fun NoteItemPreview(
     val note = NotesProvider(wordIncrement = 30).values.first()
     ComposeNotesTheme(darkTheme = isDark) {
         Surface {
-            NoteItem(note, {})
+            NoteItem(note, {}, {})
         }
     }
 }
 
+@ExperimentalMaterialApi
 @Composable
-fun NotesList(notes: List<Note>, onClick: (Note) -> Unit, modifier: Modifier = Modifier) {
+fun NotesList(
+    notes: List<Note>,
+    onClick: (Note) -> Unit,
+    onDelete: (Note) -> Unit,
+    modifier: Modifier = Modifier
+) {
     LazyColumnFor(items = notes, modifier = modifier) {
-        NoteItem(it, onClick)
+        NoteItem(it, onClick, onDelete)
         Divider(thickness = 0.2f.dp)
     }
 }
 
+@ExperimentalMaterialApi
 @Preview("Notes List", showDecoration = true)
 @Composable
 fun ListPreview(@PreviewParameter(NoteListProvider::class) noteItems: Pair<List<Note>, Boolean>) {
     ComposeNotesTheme(darkTheme = noteItems.second) {
         Scaffold {
-            NotesList(noteItems.first, {}, modifier = Modifier.padding(it))
+            NotesList(noteItems.first, {}, {}, modifier = Modifier.padding(it))
         }
     }
 }
