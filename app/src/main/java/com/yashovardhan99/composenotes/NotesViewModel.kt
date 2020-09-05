@@ -1,9 +1,6 @@
 package com.yashovardhan99.composenotes
 
 import android.app.Application
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -14,8 +11,8 @@ import java.util.*
 
 class NotesViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: NoteRepository
-    var notes by mutableStateOf<List<Note>>(listOf())
-        private set
+    private val _notes = MutableLiveData(listOf<Note>())
+    val notes: LiveData<List<Note>> = _notes
     private val _selectedNote: MutableLiveData<Note> = MutableLiveData()
     val selectedNote: LiveData<Note> = _selectedNote
 
@@ -53,7 +50,9 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refreshNotes() {
-        viewModelScope.launch { notes = repository.getAllNotes() }
+        viewModelScope.launch {
+            _notes.value = repository.getAllNotes().sortedByDescending { it.lastModified }
+        }
     }
 
     fun deleteNote(note: Note) {

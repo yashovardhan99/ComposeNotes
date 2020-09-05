@@ -23,10 +23,11 @@ import androidx.compose.ui.platform.setContent
 import androidx.lifecycle.ViewModelProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 
+@ExperimentalFocus
 @ExperimentalFoundationApi
 class MainActivity : AppCompatActivity() {
     private lateinit var notesViewModel: NotesViewModel
-    @OptIn(ExperimentalFocus::class)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         notesViewModel = ViewModelProvider(this)[NotesViewModel::class.java]
@@ -36,8 +37,9 @@ class MainActivity : AppCompatActivity() {
                 if (selectedNote == null) {
                     notesViewModel.refreshNotes()
                     MainPageScaffold(onNewPress = { notesViewModel.newNote() }) {
+                        val notes by notesViewModel.notes.observeAsState(listOf())
                         NotesList(
-                            notesViewModel.notes,
+                            notes,
                             { note -> notesViewModel.selectNote(note) },
                             modifier = Modifier.padding(it)
                         )
@@ -56,9 +58,9 @@ class MainActivity : AppCompatActivity() {
                             }"
                         ) {
                             NoteEditor(
-                                note,
-                                { note, s -> notesViewModel.updateNote(note, s) },
-                                Modifier.padding(it)
+                                originalNote = note,
+                                updateNote = { note, s -> notesViewModel.updateNote(note, s) },
+                                modifier = Modifier.padding(it)
                             )
                         }
                     }
