@@ -1,5 +1,6 @@
 package com.yashovardhan99.composenotes
 
+import androidx.annotation.experimental.Experimental
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.InnerPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.length
@@ -32,6 +34,7 @@ import androidx.ui.tooling.preview.Preview
 import androidx.ui.tooling.preview.PreviewParameter
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
+import org.jetbrains.annotations.TestOnly
 import timber.log.Timber
 
 @ExperimentalFocus
@@ -61,7 +64,7 @@ fun NoteEditor(
             .verticalScroll(scrollState)
             .focusRequester(focusRequester)
     )
-    onCommit() {
+    onCommit {
         if (note.text.isBlank())
             focusRequester.requestFocus()
     }
@@ -110,6 +113,61 @@ fun NoteEditorPreview(@PreviewParameter(ThemePreviewProvider::class) isDark: Boo
         EditScaffold(onBackPressed = {}, onDelete = {}, bottomText = "Edit here") {
             NoteEditor(originalNote = note, updateNote = { _, _ -> note })
         }
+    }
+}
+
+/**
+ * Changes font to monospace for any text between triple back ticks (```)
+ */
+val codeFilter = object : VisualTransformation {
+    val style = SpanStyle(
+        fontFamily = FontFamily.Monospace,
+        background = Color.DarkGray
+    )
+
+    override fun filter(text: AnnotatedString): TransformedText {
+        var started = false
+        var count = 0
+        val builder = AnnotatedString.Builder()
+        val offsets = mutableListOf<Int>()
+        text.text.forEachIndexed { i, char ->
+            offsets.add(i - count)
+            if (char == '`') {
+                count += 1
+            } else {
+                if (count % 3 != 0) {
+                    repeat(count % 3) { builder.append("`") }
+                    count -= count % 3
+                    builder.append(char)
+                }
+                builder.append(char)
+            }
+            if (count > 0 && count % 3 == 0 && char == '`') {
+                started = started.not()
+                Timber.d("Index = $i started = $started}")
+                if (started) {
+                    builder.pushStyle(style)
+                } else {
+                    builder.pop()
+                }
+            }
+        }
+        Timber.d("Offset map = $offsets")
+        repeat(count % 3) { builder.append("`") }
+        count -= count % 3
+        val offsetMap = object : OffsetMap {
+            override fun originalToTransformed(offset: Int): Int {
+                return if (offset >= offsets.size) (offsets.lastOrNull() ?: offset) + 1
+                else offsets[offset]
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                return if (offsets.contains(offset))
+                    offsets.indexOf(offset)
+                else offset
+            }
+        }
+        return TransformedText(builder.toAnnotatedString(), offsetMap)
     }
 }
 
