@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -37,6 +38,12 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
                     SortKey.CREATED -> it.created
                     SortKey.LAST_MODIFIED -> it.lastModified
                 }
+            }
+        }
+        val search = repository.searchNotes("t")
+        viewModelScope.launch {
+            search.collect {
+                Timber.d("$it")
             }
         }
     }

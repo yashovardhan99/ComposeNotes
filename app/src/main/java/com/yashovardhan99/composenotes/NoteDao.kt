@@ -20,5 +20,9 @@ interface NoteDao {
     @Query("SELECT * FROM NOTE_TABLE WHERE id = :id")
     suspend fun loadNoteFromId(id: Long): Note
 
+    @Query(
+        "SELECT NOTE_TABLE.* FROM NOTE_TABLE JOIN NOTE_SEARCH ON (NOTE_TABLE.id = NOTE_SEARCH.rowid) WHERE NOTE_SEARCH MATCH :query"
+    )
+    fun searchNotes(query: String): Flow<List<Note>>
 
 }
