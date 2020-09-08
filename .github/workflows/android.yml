@@ -23,7 +23,7 @@ jobs:
           java-version: 1.8
 
       - name: Run android Linter
-        run: ./gradlew/lintDebug
+        run: ./gradlew lintDebug
         
       - name: Unit tests
         run: ./gradlew testDebug
