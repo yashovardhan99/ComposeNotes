@@ -14,11 +14,13 @@ class NoteDaoTest {
     private lateinit var notesDao: NoteDao
 
     @Before
-    fun createDb() = runBlocking {
+    fun createDb() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         database = Room.inMemoryDatabaseBuilder(context, NoteDatabase::class.java).build()
         notesDao = database.noteDao()
-        database.noteDao().insertNote()
+        runBlocking {
+            database.noteDao().insertNote()
+        }
     }
 
     // TODO: 08/09/20 : Tests for inserting notes
@@ -28,14 +30,16 @@ class NoteDaoTest {
     // TODO: 08/09/20 : Tests for searching notes
 
     @Test
-    fun sampleTest() = runBlocking {
-        notesDao.loadAllNotes().collect {
-            Assert.assertArrayEquals(it.toTypedArray(), arrayOf())
+    fun sampleTest() {
+        runBlocking {
+            notesDao.loadAllNotes().collect {
+                Assert.assertArrayEquals(it.toTypedArray(), arrayOf())
+            }
         }
     }
 
     @After
-    fun closeDb() = runBlocking {
+    fun closeDb() {
         database.close()
     }
 
