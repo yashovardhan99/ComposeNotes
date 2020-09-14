@@ -8,8 +8,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.*
 
@@ -38,7 +43,7 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         val search = repository.searchNotes("t")
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             search.collect {
                 Timber.d("$it")
             }
@@ -52,7 +57,7 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     fun updateNote(note: Note, text: String): Note {
         note.text = text
         note.lastModified = Date()
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.updateNote(note)
         }
         return note
@@ -62,7 +67,7 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         val note = createNote()
         Timber.d("New note = $note")
         viewModelScope.launch {
-            note.id = repository.insertNote(note)
+            note.id = withContext(Dispatchers.IO) { repository.insertNote(note) }
             _selectedNote.value = note
             Timber.d("Inserted note = $note")
         }
@@ -74,7 +79,7 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteNote(note: Note) {
         selectNote(null)
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.deleteNote(note)
         }
     }
