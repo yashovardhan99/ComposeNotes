@@ -50,13 +50,16 @@ class NoteDaoTest {
             notesDao.insertNote(TestUtil.note1)
             notesDao.insertNote(TestUtil.note2)
             notesDao.loadAllNotes().take(1).collect {
-                assertEquals(it.size, 2)
-                assertEquals(it[0], TestUtil.note1)
-                assertEquals(it[1], TestUtil.note2)
+                assertEquals(2, it.size)
+                assertEquals(TestUtil.note1, it[0])
+                assertEquals(TestUtil.note2, it[1])
             }
         }
     }
 
+    /**
+     * Test to verify notes are properly deleted
+     */
     @Test
     fun verifyDeleted() {
         runBlocking {
@@ -68,9 +71,45 @@ class NoteDaoTest {
             }
         }
     }
-    // TODO: 08/09/20 : Tests for getting all notes
-    // TODO: 08/09/20 : Tests for getting specific notes
-    // TODO: 08/09/20 : Tests for searching notes
+
+    /**
+     * Test to verify loadNoteFromId calls
+     */
+    @Test
+    fun verifyGetId() {
+        runBlocking {
+            notesDao.insertNote(TestUtil.note1, TestUtil.note2)
+            assertEquals(TestUtil.note1, notesDao.loadNoteFromId(1))
+            assertEquals(TestUtil.note2, notesDao.loadNoteFromId(2))
+        }
+    }
+
+    /**
+     * Test to verify FTS is working
+     * Note: Repository always adds * to the query.
+     */
+    @Test
+    fun verifySearch() {
+        runBlocking {
+            notesDao.insertNote(TestUtil.note1, TestUtil.note2)
+            notesDao.searchNotes("*1*").take(1).collect {
+                assertEquals(1, it.size)
+                assertEquals(TestUtil.note1, it.first())
+            }
+            notesDao.searchNotes("*2*").take(1).collect {
+                assertEquals(1, it.size)
+                assertEquals(TestUtil.note2, it.first())
+            }
+            notesDao.searchNotes("*no*").take(1).collect {
+                assertEquals(2, it.size)
+                assertEquals(TestUtil.note1, it[0])
+                assertEquals(TestUtil.note2, it[1])
+            }
+            notesDao.searchNotes("**").take(1).collect {
+                assertTrue(it.isEmpty())
+            }
+        }
+    }
 
     @After
     fun closeDb() {

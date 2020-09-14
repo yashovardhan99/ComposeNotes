@@ -3,7 +3,7 @@ package com.yashovardhan99.composenotes
 import java.util.*
 
 object TestUtil {
-    val timestamp = Calendar.getInstance()
+    private val timestamp: Date = Calendar.getInstance()
         .apply {
             set(Calendar.YEAR, 2020)
             set(Calendar.MONTH, Calendar.SEPTEMBER)
