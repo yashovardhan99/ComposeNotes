@@ -9,9 +9,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.savedinstancestate.savedInstanceState
 import androidx.compose.ui.Alignment
@@ -96,6 +94,12 @@ fun EditScaffold(
             )
         }, bottomBar = {
             BottomAppBar(backgroundColor = Color.Transparent, elevation = 2.dp) {
+                IconButton(onClick = {}) {
+                    Icon(asset = Icons.Default.CameraAlt)
+                }
+                IconButton(onClick = {}) {
+                    Icon(asset = Icons.Default.Image)
+                }
                 Text(
                     text = bottomText,
                     style = typography.caption,
