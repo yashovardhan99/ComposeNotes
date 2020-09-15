@@ -71,6 +71,7 @@ fun NoteItem(
         }
     }
     SwipeToDismiss(state = dismissState,
+        modifier = modifier,
         dismissThresholds = { FractionalThreshold(0.25f) },
         background = {
             val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
@@ -96,7 +97,7 @@ fun NoteItem(
         }) {
         Card(elevation = animate(if (dismissState.direction != 0f) 4.dp else 0.dp)) {
             Column(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = { onClick(note) })
                     .padding(20.dp),
