@@ -19,9 +19,10 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.*
 
-class NotesViewModel @ViewModelInject constructor(application: Application) :
+class NotesViewModel @ViewModelInject constructor(
+    private val repository: NoteRepository,
+    application: Application) :
     AndroidViewModel(application) {
-    private val repository: NoteRepository
     val notes: Flow<List<Note>>
     private val _selectedNote: MutableLiveData<Note> = MutableLiveData()
     val selectedNote: LiveData<Note> = _selectedNote
@@ -30,8 +31,6 @@ class NotesViewModel @ViewModelInject constructor(application: Application) :
     private val sortPreferencesKey = preferencesKey<String>("sort_type")
 
     init {
-        val notesDao = NoteDatabase.getDatabase(application).noteDao()
-        repository = NoteRepository(notesDao)
         val sortedBy = dataStore.data.map { preferences ->
             SortKey.valueOf(preferences[sortPreferencesKey] ?: SortKey.LAST_MODIFIED.name)
         }

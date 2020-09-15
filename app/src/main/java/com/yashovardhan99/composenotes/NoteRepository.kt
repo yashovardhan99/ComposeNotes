@@ -1,6 +1,8 @@
 package com.yashovardhan99.composenotes
 
-class NoteRepository(private val noteDao: NoteDao) {
+import javax.inject.Inject
+
+class NoteRepository @Inject constructor(private val noteDao: NoteDao) {
     fun getAllNotes() = noteDao.loadAllNotes()
     suspend fun updateNote(note: Note) = noteDao.updateNote(note)
     suspend fun insertNote(note: Note): Long = noteDao.insertNote(note).first()
