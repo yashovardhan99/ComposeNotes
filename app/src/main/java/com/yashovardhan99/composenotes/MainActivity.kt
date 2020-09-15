@@ -1,6 +1,8 @@
 package com.yashovardhan99.composenotes
 
+import android.content.ComponentName
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.text.format.DateUtils
 import androidx.activity.viewModels
@@ -42,6 +44,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
+            intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
+                notesViewModel.newNote(it)
+            }
+        }
         setContent {
             val scaffoldState = rememberScaffoldState()
             launchInComposition {
@@ -81,7 +88,7 @@ class MainActivity : AppCompatActivity() {
                             onBackPressed =
                             { notesViewModel.selectNote(null) },
                             onDelete = { notesViewModel.deleteNote(note) },
-                            onShare = { shareNote(note)  },
+                            onShare = { shareNote(note) },
                             bottomText = "Edited ${
                                 DateUtils.getRelativeTimeSpanString(
                                     this, lastModified.time, false
@@ -104,13 +111,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun shareNote(note: Note) {
+    private fun shareNote(note: Note) {
+        val exclude = arrayOf(ComponentName(packageName, MainActivity::class.java.name))
         val intent = Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_TEXT, note.text)
             type = "text/plain"
         }
-        startActivity(Intent.createChooser(intent, null))
+        val shareIntent = Intent.createChooser(intent, null).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, exclude)
+            }
+        }
+        startActivity(shareIntent)
     }
 
     override fun onBackPressed() {

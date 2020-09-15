@@ -65,8 +65,8 @@ class NotesViewModel @ViewModelInject constructor(
         return note
     }
 
-    fun newNote() {
-        val note = createNote()
+    fun newNote(text: String = "") {
+        val note = createNote(text)
         Timber.d("New note = $note")
         viewModelScope.launch {
             note.id = withContext(Dispatchers.IO) { repository.insertNote(note) }
@@ -75,8 +75,8 @@ class NotesViewModel @ViewModelInject constructor(
         }
     }
 
-    private fun createNote(): Note {
-        return Note(text = "", created = Date(), lastModified = Date())
+    private fun createNote(text: String = ""): Note {
+        return Note(text = text, created = Date(), lastModified = Date())
     }
 
     fun deleteNote(note: Note) {
