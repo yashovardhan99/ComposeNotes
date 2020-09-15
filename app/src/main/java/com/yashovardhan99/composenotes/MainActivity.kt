@@ -1,5 +1,6 @@
 package com.yashovardhan99.composenotes
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.format.DateUtils
 import androidx.activity.viewModels
@@ -80,6 +81,7 @@ class MainActivity : AppCompatActivity() {
                             onBackPressed =
                             { notesViewModel.selectNote(null) },
                             onDelete = { notesViewModel.deleteNote(note) },
+                            onShare = { shareNote(note)  },
                             bottomText = "Edited ${
                                 DateUtils.getRelativeTimeSpanString(
                                     this, lastModified.time, false
@@ -100,6 +102,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    fun shareNote(note: Note) {
+        val intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, note.text)
+            type = "text/plain"
+        }
+        startActivity(Intent.createChooser(intent, null))
     }
 
     override fun onBackPressed() {

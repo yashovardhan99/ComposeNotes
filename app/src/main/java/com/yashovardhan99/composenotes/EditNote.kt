@@ -1,6 +1,5 @@
 package com.yashovardhan99.composenotes
 
-import androidx.annotation.experimental.Experimental
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.InnerPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +11,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.*
 import androidx.compose.runtime.savedinstancestate.savedInstanceState
 import androidx.compose.ui.Alignment
@@ -34,7 +34,6 @@ import androidx.ui.tooling.preview.Preview
 import androidx.ui.tooling.preview.PreviewParameter
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
-import org.jetbrains.annotations.TestOnly
 import timber.log.Timber
 
 @ExperimentalFocus
@@ -74,6 +73,7 @@ fun NoteEditor(
 fun EditScaffold(
     onBackPressed: () -> Unit,
     onDelete: () -> Unit,
+    onShare: () -> Unit,
     bottomText: String = "",
     modifier: Modifier = Modifier,
     content: @Composable() (InnerPadding) -> Unit
@@ -88,6 +88,9 @@ fun EditScaffold(
                 elevation = 2.dp, actions = {
                     IconButton(onClick = onDelete) {
                         Icon(asset = Icons.Default.Delete)
+                    }
+                    IconButton(onClick = onShare) {
+                        Icon(asset = Icons.Default.Share)
                     }
                 }
             )
@@ -110,7 +113,7 @@ fun EditScaffold(
 fun NoteEditorPreview(@PreviewParameter(ThemePreviewProvider::class) isDark: Boolean) {
     val note = NotesProvider(wordIncrement = 50).values.first()
     ComposeNotesTheme(darkTheme = isDark) {
-        EditScaffold(onBackPressed = {}, onDelete = {}, bottomText = "Edit here") {
+        EditScaffold(onBackPressed = {}, onDelete = {}, onShare = {}, bottomText = "Edit here") {
             NoteEditor(originalNote = note, updateNote = { _, _ -> note })
         }
     }
