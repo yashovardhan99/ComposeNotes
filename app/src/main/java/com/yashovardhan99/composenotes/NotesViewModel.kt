@@ -11,7 +11,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.util.*
 
@@ -45,12 +48,6 @@ class NotesViewModel @ViewModelInject constructor(
                     SortKey.CREATED -> it.created
                     SortKey.LAST_MODIFIED -> it.lastModified
                 }
-            }
-        }
-        val search = repository.searchNotes("t")
-        viewModelScope.launch(Dispatchers.IO) {
-            search.collect {
-                Timber.d("$it")
             }
         }
     }
@@ -107,6 +104,10 @@ class NotesViewModel @ViewModelInject constructor(
         viewModelScope.launch {
             repository.insertNote(note)
         }
+    }
+
+    override fun onCleared() {
+        deletedChannel.close()
     }
 }
 
