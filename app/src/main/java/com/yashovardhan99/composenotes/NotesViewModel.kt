@@ -9,19 +9,18 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.*
 import timber.log.Timber
 import java.util.*
 
+@FlowPreview
+@ExperimentalCoroutinesApi
 class NotesViewModel @ViewModelInject constructor(
     private val repository: NoteRepository,
-    application: Application) :
+    application: Application
+) :
     AndroidViewModel(application) {
     val notes: Flow<List<Note>>
     private val _selectedNote: MutableLiveData<Note> = MutableLiveData()
@@ -29,6 +28,11 @@ class NotesViewModel @ViewModelInject constructor(
     private val context = application.applicationContext
     private val dataStore = context.createDataStore("notesMainList")
     private val sortPreferencesKey = preferencesKey<String>("sort_type")
+
+    @ExperimentalCoroutinesApi
+    private val deletedChannel = ConflatedBroadcastChannel<Note>()
+
+    val deleteFlow = deletedChannel.asFlow()
 
     init {
         val sortedBy = dataStore.data.map { preferences ->
@@ -81,7 +85,11 @@ class NotesViewModel @ViewModelInject constructor(
     fun deleteNote(note: Note) {
         selectNote(null)
         viewModelScope.launch(Dispatchers.IO) {
+            Timber.d("Deleting $note")
+            deletedChannel.offer(note)
+            Timber.d("Sent to channel")
             repository.deleteNote(note)
+            Timber.d("Note deleted")
         }
     }
 
@@ -91,6 +99,12 @@ class NotesViewModel @ViewModelInject constructor(
             dataStore.edit { preferences ->
                 preferences[sortPreferencesKey] = sortKey.name
             }
+        }
+    }
+
+    fun undoDelete(note: Note) {
+        viewModelScope.launch {
+            repository.insertNote(note)
         }
     }
 }

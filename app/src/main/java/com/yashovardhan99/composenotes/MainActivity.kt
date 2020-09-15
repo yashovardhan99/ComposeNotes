@@ -24,7 +24,13 @@ import androidx.compose.ui.unit.Position
 import androidx.compose.ui.unit.dp
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.collect
+import timber.log.Timber
 
+@FlowPreview
+@ExperimentalCoroutinesApi
 @AndroidEntryPoint
 @ExperimentalMaterialApi
 @ExperimentalFocus
@@ -36,13 +42,29 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val scaffoldState = rememberScaffoldState()
+            launchInComposition {
+                notesViewModel.deleteFlow.collect {
+                    Timber.d("Received note for snackbar : $it state = $scaffoldState")
+                    val result = scaffoldState.snackbarHostState.showSnackbar(
+                        "Note deleted",
+                        "UNDO",
+                        SnackbarDuration.Long
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        notesViewModel.undoDelete(it)
+                    }
+                    Timber.d("Snackbar result = $result")
+                }
+            }
             val selectedNote by notesViewModel.selectedNote.observeAsState()
             ComposeNotesTheme {
                 Crossfade(selectedNote) { note ->
                     if (note == null) {
                         MainPageScaffold(
                             onNewPress = { notesViewModel.newNote() },
-                            onSortKeyUpdate = notesViewModel::updateSortKey
+                            onSortKeyUpdate = notesViewModel::updateSortKey,
+                            state = scaffoldState
                         ) { innerPadding ->
                             val notes by notesViewModel.notes.collectAsState(listOf())
                             NotesList(
@@ -88,14 +110,17 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+@ExperimentalMaterialApi
 @Composable
 fun MainPageScaffold(
     onNewPress: () -> Unit,
     modifier: Modifier = Modifier,
     onSortKeyUpdate: (SortKey) -> Unit,
+    state: ScaffoldState,
     content: @Composable() (InnerPadding) -> Unit
 ) {
     Scaffold(
+        scaffoldState = state,
         topBar = {
             TopAppBar(
                 title = { Text(text = "Compose Notes") },
