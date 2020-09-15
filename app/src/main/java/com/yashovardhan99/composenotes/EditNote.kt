@@ -123,61 +123,6 @@ fun NoteEditorPreview(@PreviewParameter(ThemePreviewProvider::class) isDark: Boo
     }
 }
 
-/**
- * Changes font to monospace for any text between triple back ticks (```)
- */
-val codeFilter = object : VisualTransformation {
-    val style = SpanStyle(
-        fontFamily = FontFamily.Monospace,
-        background = Color.DarkGray
-    )
-
-    override fun filter(text: AnnotatedString): TransformedText {
-        var started = false
-        var count = 0
-        val builder = AnnotatedString.Builder()
-        val offsets = mutableListOf<Int>()
-        text.text.forEachIndexed { i, char ->
-            offsets.add(i - count)
-            if (char == '`') {
-                count += 1
-            } else {
-                if (count % 3 != 0) {
-                    repeat(count % 3) { builder.append("`") }
-                    count -= count % 3
-                    builder.append(char)
-                }
-                builder.append(char)
-            }
-            if (count > 0 && count % 3 == 0 && char == '`') {
-                started = started.not()
-                Timber.d("Index = $i started = $started}")
-                if (started) {
-                    builder.pushStyle(style)
-                } else {
-                    builder.pop()
-                }
-            }
-        }
-        Timber.d("Offset map = $offsets")
-        repeat(count % 3) { builder.append("`") }
-        count -= count % 3
-        val offsetMap = object : OffsetMap {
-            override fun originalToTransformed(offset: Int): Int {
-                return if (offset >= offsets.size) (offsets.lastOrNull() ?: offset) + 1
-                else offsets[offset]
-            }
-
-            override fun transformedToOriginal(offset: Int): Int {
-                return if (offsets.contains(offset))
-                    offsets.indexOf(offset)
-                else offset
-            }
-        }
-        return TransformedText(builder.toAnnotatedString(), offsetMap)
-    }
-}
-
 val firstLineHighlight = object : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val first = text.text.indexOf('\n')
