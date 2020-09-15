@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.datastore.preferences.createDataStore
 import androidx.datastore.preferences.edit
 import androidx.datastore.preferences.preferencesKey
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -18,7 +19,8 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.*
 
-class NotesViewModel(application: Application) : AndroidViewModel(application) {
+class NotesViewModel @ViewModelInject constructor(application: Application) :
+    AndroidViewModel(application) {
     private val repository: NoteRepository
     val notes: Flow<List<Note>>
     private val _selectedNote: MutableLiveData<Note> = MutableLiveData()

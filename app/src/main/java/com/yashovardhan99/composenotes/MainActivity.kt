@@ -2,6 +2,7 @@ package com.yashovardhan99.composenotes
 
 import android.os.Bundle
 import android.text.format.DateUtils
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -21,18 +22,19 @@ import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.Position
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 @ExperimentalMaterialApi
 @ExperimentalFocus
 @ExperimentalFoundationApi
 class MainActivity : AppCompatActivity() {
-    private lateinit var notesViewModel: NotesViewModel
+
+    private val notesViewModel: NotesViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        notesViewModel = ViewModelProvider(this)[NotesViewModel::class.java]
         setContent {
             val selectedNote by notesViewModel.selectedNote.observeAsState()
             ComposeNotesTheme {
