@@ -2,6 +2,7 @@ package com.yashovardhan99.composenotes
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.format.DateUtils
@@ -93,7 +94,8 @@ class MainActivity : AppCompatActivity() {
                                 DateUtils.getRelativeTimeSpanString(
                                     this, lastModified.time, false
                                 )
-                            }"
+                            }",
+                            hasCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
                         ) {
                             NoteEditor(
                                 originalNote = note,

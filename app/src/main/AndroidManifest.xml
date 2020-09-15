@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.yashovardhan99.composenotes">
 
+    <uses-feature
+        android:name="android.hardware.camera2"
+        android:required="false" />
     <application
         android:name=".ComposeApp"
         android:allowBackup="true"

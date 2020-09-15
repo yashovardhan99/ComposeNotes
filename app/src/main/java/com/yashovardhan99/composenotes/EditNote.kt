@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.length
@@ -73,6 +72,7 @@ fun EditScaffold(
     onDelete: () -> Unit,
     onShare: () -> Unit,
     bottomText: String = "",
+    hasCamera: Boolean = true,
     modifier: Modifier = Modifier,
     content: @Composable() (InnerPadding) -> Unit
 ) {
@@ -94,9 +94,10 @@ fun EditScaffold(
             )
         }, bottomBar = {
             BottomAppBar(backgroundColor = Color.Transparent, elevation = 2.dp) {
-                IconButton(onClick = {}) {
-                    Icon(asset = Icons.Default.CameraAlt)
-                }
+                if (hasCamera)
+                    IconButton(onClick = {}) {
+                        Icon(asset = Icons.Default.CameraAlt)
+                    }
                 IconButton(onClick = {}) {
                     Icon(asset = Icons.Default.Image)
                 }
