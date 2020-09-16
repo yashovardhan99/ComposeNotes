@@ -8,8 +8,11 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.onCommit
 import androidx.compose.runtime.savedinstancestate.savedInstanceState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.ExperimentalFocus
@@ -34,19 +37,17 @@ import timber.log.Timber
 @ExperimentalFoundationApi
 @Composable
 fun NoteEditor(
-    originalNote: Note,
-    updateNote: (Note, String) -> Note,
+    note: Note,
+    updateNote: (Note, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Timber.d("NoteEditor : Note = $originalNote")
-    var note by remember { mutableStateOf(originalNote) }
+    Timber.d("NoteEditor : Note = $note")
     var value by savedInstanceState(saver = TextFieldValue.Saver) {
         TextFieldValue(
             note.text,
             selection = TextRange(note.text.length)
         )
     }
-    val scrollState = rememberScrollState()
     val focusRequester = FocusRequester()
     // This behaviour might be fixed depending on future versions of compose
     ScrollableColumn(
@@ -66,7 +67,7 @@ fun NoteEditor(
             value = value,
             onValueChange = {
                 if (value.text != it.text)
-                    note = updateNote(note, it.text)
+                    updateNote(note, it.text)
                 value = it
             }, modifier = Modifier
                 .fillMaxWidth()
@@ -141,7 +142,7 @@ fun NoteEditorPreview(@PreviewParameter(ThemePreviewProvider::class) isDark: Boo
             onShare = {},
             bottomText = "Edit here",
             onRequestCamera = {}) {
-            NoteEditor(originalNote = note, updateNote = { _, _ -> note })
+            NoteEditor(note = note, updateNote = { _, _ -> note })
         }
     }
 }

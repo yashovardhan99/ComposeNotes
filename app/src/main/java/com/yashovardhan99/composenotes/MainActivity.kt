@@ -103,11 +103,11 @@ class MainActivity : AppCompatActivity() {
                             onRequestCamera = { captureImage(note) }
                         ) {
                             NoteEditor(
-                                originalNote = note,
+                                note = note,
                                 updateNote = { note, s ->
                                     val updated = notesViewModel.updateNote(note, s)
                                     lastModified = updated.lastModified
-                                    updated
+                                    notesViewModel.selectNote(updated)
                                 },
                                 modifier = Modifier.padding(it)
                             )
@@ -132,9 +132,8 @@ class MainActivity : AppCompatActivity() {
             registerForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
                 Timber.d("Picture taken = $taken")
                 if (taken) {
-                    note.imageUri = imageUri
-                    notesViewModel.updateNote(note)
-                    notesViewModel.selectNote(note)
+                    val updated = notesViewModel.updateNote(note, imageUri)
+                    notesViewModel.selectNote(updated)
                 }
             }
         takePicture.launch(imageUri)

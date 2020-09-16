@@ -1,6 +1,7 @@
 package com.yashovardhan99.composenotes
 
 import android.app.Application
+import android.net.Uri
 import android.os.Environment
 import androidx.datastore.preferences.createDataStore
 import androidx.datastore.preferences.edit
@@ -61,11 +62,13 @@ class NotesViewModel @ViewModelInject constructor(
         _selectedNote.value = note
     }
 
-    fun updateNote(note: Note) {
+    fun updateNote(note: Note, imageUri: Uri): Note {
+        note.imageUri = imageUri
         note.lastModified = Date()
         viewModelScope.launch(Dispatchers.IO) {
             repository.updateNote(note)
         }
+        return note
     }
 
     fun updateNote(note: Note, text: String): Note {
