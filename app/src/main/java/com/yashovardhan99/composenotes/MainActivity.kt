@@ -12,6 +12,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Icon
 import androidx.compose.foundation.Text
+import androidx.compose.foundation.layout.ExperimentalLayout
 import androidx.compose.foundation.layout.InnerPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -33,6 +34,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
 
+@ExperimentalLayout
 @FlowPreview
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint

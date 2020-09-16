@@ -1,9 +1,7 @@
 package com.yashovardhan99.composenotes
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.InnerPadding
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
@@ -18,12 +16,9 @@ import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ParagraphStyle
-import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
-import androidx.compose.ui.text.length
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,8 +26,10 @@ import androidx.ui.tooling.preview.Preview
 import androidx.ui.tooling.preview.PreviewParameter
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
+import dev.chrisbanes.accompanist.coil.CoilImage
 import timber.log.Timber
 
+@ExperimentalLayout
 @ExperimentalFocus
 @ExperimentalFoundationApi
 @Composable
@@ -43,23 +40,41 @@ fun NoteEditor(
 ) {
     Timber.d("NoteEditor : Note = $originalNote")
     var note by remember { mutableStateOf(originalNote) }
-    var value by savedInstanceState(saver = TextFieldValue.Saver) { TextFieldValue(note.text) }
+    var value by savedInstanceState(saver = TextFieldValue.Saver) {
+        TextFieldValue(
+            note.text,
+            selection = TextRange(note.text.length)
+        )
+    }
     val scrollState = rememberScrollState()
     val focusRequester = FocusRequester()
-    BaseTextField(
-        visualTransformation = firstLineHighlight,
-        keyboardType = KeyboardType.Text,
-        imeAction = ImeAction.NoAction,
-        value = value,
-        onValueChange = {
-            if (value.text != it.text)
-                note = updateNote(note, it.text)
-            value = it
-        }, modifier = modifier.padding(horizontal = 20.dp)
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .focusRequester(focusRequester)
-    )
+    // This behaviour might be fixed depending on future versions of compose
+    ScrollableColumn(
+        modifier = modifier.fillMaxSize()
+    ) {
+        note.imageUri?.let {
+            CoilImage(
+                data = it,
+                modifier = Modifier.gravity(Alignment.CenterHorizontally)
+                    .padding(bottom = 20.dp)
+            )
+        }
+        BaseTextField(
+            visualTransformation = firstLineHighlight,
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.NoAction,
+            value = value,
+            onValueChange = {
+                if (value.text != it.text)
+                    note = updateNote(note, it.text)
+                value = it
+            }, modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 30.dp)
+                .focusRequester(focusRequester)
+        )
+    }
     onCommit {
         if (note.text.isBlank())
             focusRequester.requestFocus()
@@ -111,6 +126,7 @@ fun EditScaffold(
         })
 }
 
+@ExperimentalLayout
 @ExperimentalFocus
 @ExperimentalFoundationApi
 @Preview
