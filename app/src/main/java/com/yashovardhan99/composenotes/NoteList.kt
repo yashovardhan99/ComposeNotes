@@ -125,6 +125,7 @@ class NotesProvider(
                 Note(
                     i.toLong(),
                     LoremIpsum(wordIncrement * i).values.first(),
+                    null,
                     Date(),
                     Date()
                 )

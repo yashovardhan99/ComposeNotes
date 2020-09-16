@@ -1,5 +1,6 @@
 package com.yashovardhan99.composenotes
 
+import android.net.Uri
 import androidx.room.Entity
 import androidx.room.Fts4
 import androidx.room.PrimaryKey
@@ -10,6 +11,7 @@ import java.util.*
 data class Note(
     @PrimaryKey(autoGenerate = true) var id: Long = 0,
     var text: String,
+    var imageUri: Uri? = null,
     val created: Date,
     var lastModified: Date
 )
@@ -21,6 +23,17 @@ data class NoteFts(
 )
 
 class Converters {
+
+    @TypeConverter
+    fun fromUri(uri: Uri?): String? {
+        return uri.toString()
+    }
+
+    @TypeConverter
+    fun toUri(uriString: String?): Uri? {
+        return uriString?.let { Uri.parse(it) }
+    }
+
     @TypeConverter
     fun fromTimestamp(value: Long?): Date? {
         return value?.let { Date(it) }
