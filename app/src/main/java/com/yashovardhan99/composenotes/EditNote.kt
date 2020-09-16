@@ -86,6 +86,7 @@ fun EditScaffold(
     onBackPressed: () -> Unit,
     onDelete: () -> Unit,
     onShare: () -> Unit,
+    onRequestCamera: () -> Unit,
     bottomText: String = "",
     hasCamera: Boolean = true,
     modifier: Modifier = Modifier,
@@ -110,7 +111,7 @@ fun EditScaffold(
         }, bottomBar = {
             BottomAppBar(backgroundColor = Color.Transparent, elevation = 2.dp) {
                 if (hasCamera)
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = onRequestCamera) {
                         Icon(asset = Icons.Default.CameraAlt)
                     }
                 IconButton(onClick = {}) {
@@ -134,7 +135,12 @@ fun EditScaffold(
 fun NoteEditorPreview(@PreviewParameter(ThemePreviewProvider::class) isDark: Boolean) {
     val note = NotesProvider(wordIncrement = 50).values.first()
     ComposeNotesTheme(darkTheme = isDark) {
-        EditScaffold(onBackPressed = {}, onDelete = {}, onShare = {}, bottomText = "Edit here") {
+        EditScaffold(
+            onBackPressed = {},
+            onDelete = {},
+            onShare = {},
+            bottomText = "Edit here",
+            onRequestCamera = {}) {
             NoteEditor(originalNote = note, updateNote = { _, _ -> note })
         }
     }

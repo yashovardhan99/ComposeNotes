@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.format.DateUtils
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.Crossfade
@@ -27,6 +28,7 @@ import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.Position
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -97,7 +99,8 @@ class MainActivity : AppCompatActivity() {
                                     this, lastModified.time, false
                                 )
                             }",
-                            hasCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+                            hasCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY),
+                            onRequestCamera = { captureImage(note) }
                         ) {
                             NoteEditor(
                                 originalNote = note,
@@ -113,6 +116,28 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun captureImage(note: Note) {
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) return
+        val file = notesViewModel.createImageFile()
+        Timber.d("File created = $file")
+        val imageUri = FileProvider.getUriForFile(
+            this,
+            "com.yashovardhan99.composenotes.fileprovider",
+            file
+        )
+        Timber.d("File Uri = $imageUri")
+        val takePicture =
+            registerForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
+                Timber.d("Picture taken = $taken")
+                if (taken) {
+                    note.imageUri = imageUri
+                    notesViewModel.updateNote(note)
+                    notesViewModel.selectNote(note)
+                }
+            }
+        takePicture.launch(imageUri)
     }
 
     private fun shareNote(note: Note) {

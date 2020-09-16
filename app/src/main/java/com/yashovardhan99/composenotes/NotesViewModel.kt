@@ -1,6 +1,7 @@
 package com.yashovardhan99.composenotes
 
 import android.app.Application
+import android.os.Environment
 import androidx.datastore.preferences.createDataStore
 import androidx.datastore.preferences.edit
 import androidx.datastore.preferences.preferencesKey
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
+import java.io.File
+import java.text.SimpleDateFormat
 import java.util.*
 
 @FlowPreview
@@ -36,6 +39,8 @@ class NotesViewModel @ViewModelInject constructor(
     private val deletedChannel = ConflatedBroadcastChannel<Note>()
 
     val deleteFlow = deletedChannel.asFlow()
+    private val picturesDir = application.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    private val dateFormatter = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
 
     init {
         val sortedBy = dataStore.data.map { preferences ->
@@ -54,6 +59,13 @@ class NotesViewModel @ViewModelInject constructor(
 
     fun selectNote(note: Note?) {
         _selectedNote.value = note
+    }
+
+    fun updateNote(note: Note) {
+        note.lastModified = Date()
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateNote(note)
+        }
     }
 
     fun updateNote(note: Note, text: String): Note {
@@ -75,13 +87,22 @@ class NotesViewModel @ViewModelInject constructor(
         }
     }
 
+    fun createImageFile(): File {
+        val timestamp = dateFormatter.format(Date())
+        return File.createTempFile(
+            "JPEG_${timestamp}_",
+            ".jpg",
+            picturesDir
+        )
+    }
+
     private fun createNote(text: String = ""): Note {
         return Note(text = text, created = Date(), lastModified = Date())
     }
 
     fun deleteNote(note: Note) {
         selectNote(null)
-        viewModelScope.launch(Dispatchers.IO) {
+            viewModelScope.launch(Dispatchers.IO) {
             Timber.d("Deleting $note")
             deletedChannel.offer(note)
             Timber.d("Sent to channel")

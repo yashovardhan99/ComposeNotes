@@ -15,6 +15,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ComposeNotes"
         tools:ignore="AllowBackup">
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.yashovardhan99.composenotes.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/note_images" />
+        </provider>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
