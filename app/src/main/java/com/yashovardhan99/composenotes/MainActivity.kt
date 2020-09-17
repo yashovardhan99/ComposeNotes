@@ -176,7 +176,13 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_TEXT, note.text)
-            type = "text/plain"
+            type = if (note.imageUri == null)
+                "text/plain"
+            else {
+                putExtra(Intent.EXTRA_STREAM, note.imageUri)
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                "image/jpeg"
+            }
         }
         val shareIntent = Intent.createChooser(intent, null).apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

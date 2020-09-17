@@ -138,7 +138,7 @@ class NotesViewModel @ViewModelInject constructor(
     fun undoDelete(note: Note) {
         note.lastModified = Date()
         viewModelScope.launch {
-            repository.insertNote(note)
+            repository.insertNote(note.copy(imageUri = null))
         }
     }
 
