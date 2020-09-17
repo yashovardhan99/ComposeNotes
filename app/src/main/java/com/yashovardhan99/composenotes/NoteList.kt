@@ -103,13 +103,14 @@ fun NoteItem(
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 verticalGravity = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
-                    .padding(20.dp)
                     .clickable(onClick = { onClick(note) })
+                    .padding(20.dp)
             ) {
                 if (note.imageUri != null)
                     CoilImage(
                         contentScale = ContentScale.Crop,
                         data = note.imageUri,
+                        loading = { CircularProgressIndicator() },
                         modifier = Modifier.weight(0.2f).aspectRatio(1f)
                     )
                 Column(
