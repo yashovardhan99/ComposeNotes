@@ -8,12 +8,17 @@ import androidx.compose.foundation.lazy.LazyColumnFor
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.onCommit
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.drawLayer
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +31,7 @@ import androidx.ui.tooling.preview.datasource.LoremIpsum
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
 import dev.chrisbanes.accompanist.coil.CoilImage
+import dev.chrisbanes.accompanist.coil.ErrorResult
 import timber.log.Timber
 import java.util.*
 
@@ -106,13 +112,35 @@ fun NoteItem(
                     .clickable(onClick = { onClick(note) })
                     .padding(20.dp)
             ) {
-                if (note.imageUri != null)
-                    CoilImage(
-                        contentScale = ContentScale.Crop,
-                        data = note.imageUri,
-                        loading = { CircularProgressIndicator() },
-                        modifier = Modifier.weight(0.2f).aspectRatio(1f)
-                    )
+                if (note.imageUri != null) {
+                    var errorState by remember { mutableStateOf(false) }
+                    Stack(modifier = Modifier.weight(0.2f).aspectRatio(1f)) {
+                        if (errorState) {
+                            Box(
+                                backgroundColor = if (MaterialTheme.colors.isLight) Color.LightGray else Color.DarkGray,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            Icon(
+                                asset = Icons.Default.Error,
+                                modifier = Modifier.gravity(Alignment.BottomEnd).padding(4.dp),
+                                tint = MaterialTheme.colors.error
+                            )
+                        }
+                        CoilImage(
+                            contentScale = ContentScale.Crop,
+                            onRequestCompleted = {
+                                Timber.d("$it")
+                                errorState = if (it is ErrorResult) {
+                                    Timber.w(it.throwable, "Image setting failed")
+                                    true
+                                } else false
+                            },
+                            data = note.imageUri,
+                            modifier = Modifier.fillMaxSize(),
+                            loading = { Surface(elevation = 4.dp) {} }
+                        )
+                    }
+                }
                 Column(
                     modifier = Modifier
                         .weight(0.8f),
