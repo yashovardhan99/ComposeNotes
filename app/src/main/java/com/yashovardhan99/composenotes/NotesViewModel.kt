@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.io.File
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -62,13 +63,14 @@ class NotesViewModel @ViewModelInject constructor(
         _selectedNote.value = note
     }
 
-    fun updateNote(note: Note, imageUri: Uri): Note {
-        note.imageUri = imageUri
-        note.lastModified = Date()
+    fun updateNote(note: Note, imageUri: Uri) {
+        if (note.imageUri != null) deleteImage(note.imageUri)
+        val updated = note.copy(imageUri = imageUri)
+        updated.lastModified = Date()
         viewModelScope.launch(Dispatchers.IO) {
-            repository.updateNote(note)
+            repository.updateNote(updated)
         }
-        return note
+        selectNote(updated)
     }
 
     fun updateNote(note: Note, text: String): Note {
@@ -99,19 +101,29 @@ class NotesViewModel @ViewModelInject constructor(
         )
     }
 
+    fun saveImage(file: File, inputStream: InputStream) {
+        file.writeBytes(inputStream.readBytes())
+    }
+
     private fun createNote(text: String = ""): Note {
         return Note(text = text, created = Date(), lastModified = Date())
     }
 
     fun deleteNote(note: Note) {
+        if (note.imageUri != null)
+            deleteImage(note.imageUri) // FIXME: 17/09/20 Image is gone forever. User might want to undo delete
         selectNote(null)
-            viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             Timber.d("Deleting $note")
             deletedChannel.offer(note)
             Timber.d("Sent to channel")
             repository.deleteNote(note)
             Timber.d("Note deleted")
         }
+    }
+
+    private fun deleteImage(uri: Uri) {
+        context.contentResolver.delete(uri, null, null)
     }
 
     fun updateSortKey(sortKey: SortKey) {

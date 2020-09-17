@@ -11,7 +11,7 @@ import java.util.*
 data class Note(
     @PrimaryKey(autoGenerate = true) var id: Long = 0,
     var text: String,
-    var imageUri: Uri? = null,
+    val imageUri: Uri? = null,
     val created: Date,
     var lastModified: Date
 )

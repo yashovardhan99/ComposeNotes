@@ -2,10 +2,7 @@ package com.yashovardhan99.composenotes
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.BottomAppBar
-import androidx.compose.material.IconButton
-import androidx.compose.material.Scaffold
-import androidx.compose.material.TopAppBar
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
@@ -56,6 +53,9 @@ fun NoteEditor(
         note.imageUri?.let {
             CoilImage(
                 data = it,
+                loading = {
+                    CircularProgressIndicator()
+                },
                 modifier = Modifier.gravity(Alignment.CenterHorizontally)
                     .padding(bottom = 20.dp)
             )
@@ -88,6 +88,7 @@ fun EditScaffold(
     onDelete: () -> Unit,
     onShare: () -> Unit,
     onRequestCamera: () -> Unit,
+    onRequestImage: () -> Unit,
     bottomText: String = "",
     hasCamera: Boolean = true,
     modifier: Modifier = Modifier,
@@ -115,7 +116,7 @@ fun EditScaffold(
                     IconButton(onClick = onRequestCamera) {
                         Icon(asset = Icons.Default.CameraAlt)
                     }
-                IconButton(onClick = {}) {
+                IconButton(onClick = onRequestImage) {
                     Icon(asset = Icons.Default.Image)
                 }
                 Text(
@@ -141,7 +142,8 @@ fun NoteEditorPreview(@PreviewParameter(ThemePreviewProvider::class) isDark: Boo
             onDelete = {},
             onShare = {},
             bottomText = "Edit here",
-            onRequestCamera = {}) {
+            onRequestCamera = {},
+            onRequestImage = {}) {
             NoteEditor(note = note, updateNote = { _, _ -> note })
         }
     }

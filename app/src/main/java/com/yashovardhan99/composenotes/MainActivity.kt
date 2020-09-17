@@ -71,6 +71,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val selectedNote by notesViewModel.selectedNote.observeAsState()
+            Timber.d("Selected note = $selectedNote")
             ComposeNotesTheme {
                 Crossfade(selectedNote) { note ->
                     if (note == null) {
@@ -100,7 +101,8 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }",
                             hasCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY),
-                            onRequestCamera = { captureImage(note) }
+                            onRequestCamera = { captureImage(note) },
+                            onRequestImage = { requestImage(note) }
                         ) {
                             NoteEditor(
                                 note = note,
@@ -118,6 +120,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun requestImage(note: Note) {
+        val file = notesViewModel.createImageFile()
+        val imageUri = FileProvider.getUriForFile(
+            this,
+            "com.yashovardhan99.composenotes.fileprovider",
+            file
+        )
+        val getPicture = registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) {
+            Timber.d("Got content Uri = $it")
+            if (it == null) {
+                file.delete()
+                return@registerForActivityResult
+            }
+            val stream = contentResolver.openInputStream(it)
+            if (stream == null) {
+                file.delete()
+                return@registerForActivityResult
+            }
+            Timber.d("Input stream = $stream")
+            notesViewModel.updateNote(note, it)
+            notesViewModel.saveImage(file, stream)
+            notesViewModel.updateNote(note, imageUri)
+        }
+        getPicture.launch("image/*")
+    }
+
     private fun captureImage(note: Note) {
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) return
         val file = notesViewModel.createImageFile()
@@ -132,8 +162,10 @@ class MainActivity : AppCompatActivity() {
             registerForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
                 Timber.d("Picture taken = $taken")
                 if (taken) {
-                    val updated = notesViewModel.updateNote(note, imageUri)
-                    notesViewModel.selectNote(updated)
+                    notesViewModel.selectNote(null)
+                    notesViewModel.updateNote(note, imageUri)
+                } else {
+                    file.delete()
                 }
             }
         takePicture.launch(imageUri)
