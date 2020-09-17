@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.drawLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -24,6 +25,7 @@ import androidx.ui.tooling.preview.PreviewParameterProvider
 import androidx.ui.tooling.preview.datasource.LoremIpsum
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
+import dev.chrisbanes.accompanist.coil.CoilImage
 import timber.log.Timber
 import java.util.*
 
@@ -60,8 +62,9 @@ fun NoteItem(
     onDelete: (Note) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val first = remember(note.text) { note.text.substringBefore('\n') }
-    val secondary = remember(note.text) { note.text.substringAfter('\n', "").replace('\n', ' ') }
+    val first = remember(note.text) { note.text.trimStart().substringBefore('\n') }
+    val secondary =
+        remember(note.text) { note.text.trimStart().substringAfter('\n', "").replace('\n', ' ') }
     val dismissState = rememberDismissState()
     onCommit(dismissState.value) {
         if (dismissState.value != DismissValue.Default) {
@@ -96,16 +99,28 @@ fun NoteItem(
             }
         }) {
         Card(elevation = animate(if (dismissState.direction != 0f) 4.dp else 0.dp)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalGravity = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+                    .padding(20.dp)
                     .clickable(onClick = { onClick(note) })
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
             ) {
-                PrimaryText(text = first)
-                if (secondary.isNotBlank())
-                    SecondaryText(text = secondary)
+                if (note.imageUri != null)
+                    CoilImage(
+                        contentScale = ContentScale.Crop,
+                        data = note.imageUri,
+                        modifier = Modifier.weight(0.2f).aspectRatio(1f)
+                    )
+                Column(
+                    modifier = Modifier
+                        .weight(0.8f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+                ) {
+                    PrimaryText(text = first)
+                    if (secondary.isNotBlank())
+                        SecondaryText(text = secondary)
+                }
             }
         }
     }
