@@ -1,6 +1,8 @@
 package com.yashovardhan99.composenotes
 
 import android.app.Application
+import android.net.Uri
+import android.os.Environment
 import androidx.datastore.preferences.createDataStore
 import androidx.datastore.preferences.edit
 import androidx.datastore.preferences.preferencesKey
@@ -16,6 +18,9 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
+import java.io.File
+import java.io.InputStream
+import java.text.SimpleDateFormat
 import java.util.*
 
 @FlowPreview
@@ -36,6 +41,8 @@ class NotesViewModel @ViewModelInject constructor(
     private val deletedChannel = ConflatedBroadcastChannel<Note>()
 
     val deleteFlow = deletedChannel.asFlow()
+    private val picturesDir = application.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    private val dateFormatter = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
 
     init {
         val sortedBy = dataStore.data.map { preferences ->
@@ -54,6 +61,16 @@ class NotesViewModel @ViewModelInject constructor(
 
     fun selectNote(note: Note?) {
         _selectedNote.value = note
+    }
+
+    fun updateNote(note: Note, imageUri: Uri) {
+        if (note.imageUri != null) deleteImage(note.imageUri)
+        val updated = note.copy(imageUri = imageUri)
+        updated.lastModified = Date()
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateNote(updated)
+        }
+        selectNote(updated)
     }
 
     fun updateNote(note: Note, text: String): Note {
@@ -75,11 +92,26 @@ class NotesViewModel @ViewModelInject constructor(
         }
     }
 
+    fun createImageFile(): File {
+        val timestamp = dateFormatter.format(Date())
+        return File.createTempFile(
+            "JPEG_${timestamp}_",
+            ".jpg",
+            picturesDir
+        )
+    }
+
+    fun saveImage(file: File, inputStream: InputStream) {
+        file.writeBytes(inputStream.readBytes())
+    }
+
     private fun createNote(text: String = ""): Note {
         return Note(text = text, created = Date(), lastModified = Date())
     }
 
     fun deleteNote(note: Note) {
+        if (note.imageUri != null)
+            deleteImage(note.imageUri) // FIXME: 17/09/20 Image is gone forever. User might want to undo delete
         selectNote(null)
         viewModelScope.launch(Dispatchers.IO) {
             Timber.d("Deleting $note")
@@ -88,6 +120,10 @@ class NotesViewModel @ViewModelInject constructor(
             repository.deleteNote(note)
             Timber.d("Note deleted")
         }
+    }
+
+    private fun deleteImage(uri: Uri) {
+        context.contentResolver.delete(uri, null, null)
     }
 
     fun updateSortKey(sortKey: SortKey) {
@@ -102,7 +138,7 @@ class NotesViewModel @ViewModelInject constructor(
     fun undoDelete(note: Note) {
         note.lastModified = Date()
         viewModelScope.launch {
-            repository.insertNote(note)
+            repository.insertNote(note.copy(imageUri = null))
         }
     }
 

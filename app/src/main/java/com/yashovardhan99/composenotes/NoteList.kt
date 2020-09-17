@@ -8,12 +8,18 @@ import androidx.compose.foundation.lazy.LazyColumnFor
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.onCommit
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.drawLayer
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -24,6 +30,8 @@ import androidx.ui.tooling.preview.PreviewParameterProvider
 import androidx.ui.tooling.preview.datasource.LoremIpsum
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import com.yashovardhan99.composenotes.ui.typography
+import dev.chrisbanes.accompanist.coil.CoilImage
+import dev.chrisbanes.accompanist.coil.ErrorResult
 import timber.log.Timber
 import java.util.*
 
@@ -60,8 +68,9 @@ fun NoteItem(
     onDelete: (Note) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val first = remember(note.text) { note.text.substringBefore('\n') }
-    val secondary = remember(note.text) { note.text.substringAfter('\n', "").replace('\n', ' ') }
+    val first = remember(note.text) { note.text.trimStart().substringBefore('\n') }
+    val secondary =
+        remember(note.text) { note.text.trimStart().substringAfter('\n', "").replace('\n', ' ') }
     val dismissState = rememberDismissState()
     onCommit(dismissState.value) {
         if (dismissState.value != DismissValue.Default) {
@@ -96,16 +105,51 @@ fun NoteItem(
             }
         }) {
         Card(elevation = animate(if (dismissState.direction != 0f) 4.dp else 0.dp)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalGravity = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
                     .clickable(onClick = { onClick(note) })
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+                    .padding(20.dp)
             ) {
-                PrimaryText(text = first)
-                if (secondary.isNotBlank())
-                    SecondaryText(text = secondary)
+                if (note.imageUri != null) {
+                    var errorState by remember { mutableStateOf(false) }
+                    Stack(modifier = Modifier.weight(0.2f).aspectRatio(1f)) {
+                        if (errorState) {
+                            Box(
+                                backgroundColor = if (MaterialTheme.colors.isLight) Color.LightGray else Color.DarkGray,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            Icon(
+                                asset = Icons.Default.Error,
+                                modifier = Modifier.gravity(Alignment.BottomEnd).padding(4.dp),
+                                tint = MaterialTheme.colors.error
+                            )
+                        }
+                        CoilImage(
+                            contentScale = ContentScale.Crop,
+                            onRequestCompleted = {
+                                Timber.d("$it")
+                                errorState = if (it is ErrorResult) {
+                                    Timber.w(it.throwable, "Image setting failed")
+                                    true
+                                } else false
+                            },
+                            data = note.imageUri,
+                            modifier = Modifier.fillMaxSize(),
+                            loading = { Surface(elevation = 4.dp) {} }
+                        )
+                    }
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(0.8f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+                ) {
+                    PrimaryText(text = first)
+                    if (secondary.isNotBlank())
+                        SecondaryText(text = secondary)
+                }
             }
         }
     }
@@ -125,6 +169,7 @@ class NotesProvider(
                 Note(
                     i.toLong(),
                     LoremIpsum(wordIncrement * i).values.first(),
+                    null,
                     Date(),
                     Date()
                 )

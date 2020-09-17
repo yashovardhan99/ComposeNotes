@@ -2,15 +2,18 @@ package com.yashovardhan99.composenotes
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.format.DateUtils
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Icon
 import androidx.compose.foundation.Text
+import androidx.compose.foundation.layout.ExperimentalLayout
 import androidx.compose.foundation.layout.InnerPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +28,7 @@ import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.Position
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.yashovardhan99.composenotes.ui.ComposeNotesTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,6 +36,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
 
+@ExperimentalLayout
 @FlowPreview
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint
@@ -66,6 +71,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val selectedNote by notesViewModel.selectedNote.observeAsState()
+            Timber.d("Selected note = $selectedNote")
             ComposeNotesTheme {
                 Crossfade(selectedNote) { note ->
                     if (note == null) {
@@ -93,14 +99,17 @@ class MainActivity : AppCompatActivity() {
                                 DateUtils.getRelativeTimeSpanString(
                                     this, lastModified.time, false
                                 )
-                            }"
+                            }",
+                            hasCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY),
+                            onRequestCamera = { captureImage(note) },
+                            onRequestImage = { requestImage(note) }
                         ) {
                             NoteEditor(
-                                originalNote = note,
+                                note = note,
                                 updateNote = { note, s ->
                                     val updated = notesViewModel.updateNote(note, s)
                                     lastModified = updated.lastModified
-                                    updated
+                                    notesViewModel.selectNote(updated)
                                 },
                                 modifier = Modifier.padding(it)
                             )
@@ -111,12 +120,69 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun requestImage(note: Note) {
+        val file = notesViewModel.createImageFile()
+        val imageUri = FileProvider.getUriForFile(
+            this,
+            "com.yashovardhan99.composenotes.fileprovider",
+            file
+        )
+        val getPicture = registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) {
+            Timber.d("Got content Uri = $it")
+            if (it == null) {
+                file.delete()
+                return@registerForActivityResult
+            }
+            val stream = contentResolver.openInputStream(it)
+            if (stream == null) {
+                file.delete()
+                return@registerForActivityResult
+            }
+            Timber.d("Input stream = $stream")
+            notesViewModel.updateNote(note, it)
+            notesViewModel.saveImage(file, stream)
+            notesViewModel.updateNote(note, imageUri)
+        }
+        getPicture.launch("image/*")
+    }
+
+    private fun captureImage(note: Note) {
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) return
+        val file = notesViewModel.createImageFile()
+        Timber.d("File created = $file")
+        val imageUri = FileProvider.getUriForFile(
+            this,
+            "com.yashovardhan99.composenotes.fileprovider",
+            file
+        )
+        Timber.d("File Uri = $imageUri")
+        val takePicture =
+            registerForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
+                Timber.d("Picture taken = $taken")
+                if (taken) {
+                    notesViewModel.selectNote(null)
+                    notesViewModel.updateNote(note, imageUri)
+                } else {
+                    file.delete()
+                }
+            }
+        takePicture.launch(imageUri)
+    }
+
     private fun shareNote(note: Note) {
         val exclude = arrayOf(ComponentName(packageName, MainActivity::class.java.name))
         val intent = Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_TEXT, note.text)
-            type = "text/plain"
+            type = if (note.imageUri == null)
+                "text/plain"
+            else {
+                putExtra(Intent.EXTRA_STREAM, note.imageUri)
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                "image/jpeg"
+            }
         }
         val shareIntent = Intent.createChooser(intent, null).apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
